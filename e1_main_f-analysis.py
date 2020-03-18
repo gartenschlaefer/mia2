@@ -1,5 +1,5 @@
 # --
-# chorus detection
+# factor-analysis
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ from mia2 import *
 # other stuff
 from scipy.io import loadmat
 from scipy import stats
+from scipy.cluster import hierarchy
 
 # 3d plot
 from mpl_toolkits.mplot3d import Axes3D
@@ -39,6 +40,34 @@ def plot_pca(x_pca):
   plt.show()
 
 
+def plot_scatter_matrix(x, M=100, N=3):
+  """
+  plot a scatter matrix with pandas with M samples and N features
+  """
+  pd.plotting.scatter_matrix(pd.DataFrame(x[:M, :N], columns=feature_names[:N]))
+  plt.show()
+
+
+def plot_dendrogram(z):
+  """
+  plot a dendrogram
+  """
+  plt.figure()
+  dn = hierarchy.dendrogram(hierarchy.linkage(z, 'single'))
+  plt.show()
+
+
+def plot_corr(c):
+  """
+  make image plot of correlation
+  """
+  plt.figure()
+  plt.imshow(c)
+  plt.colorbar()
+  plt.tight_layout()
+  plt.show()
+
+
 # --
 # Main function
 if __name__ == '__main__':
@@ -53,6 +82,7 @@ if __name__ == '__main__':
   # load file
   data = loadmat(file_dir + file_name_data)
   #tables = loadmat(file_dir + file_name_tables)
+  #print("tables: ", tables)
 
   # extract data [samples x features]
   x = data['Xr']
@@ -60,11 +90,7 @@ if __name__ == '__main__':
 
   feature_names = [data['parameterAllName'][0, i][0] for i in range(n)]
   
-  #print("x: ", x)
-  #print("par: ", data['parameterAllName'][0, 0][0])
   #print("feature_names: \n", feature_names)
-
-  #print("tables: ", tables)
 
   print("input data: ", x.shape)
   print("feature length: ", len(feature_names))
@@ -80,14 +106,22 @@ if __name__ == '__main__':
   # --
   # Data Visualization
 
-  df = pd.DataFrame(x[:100, :3], columns=feature_names[:3])
-
-  # scatter plot
-  pd.plotting.scatter_matrix(df)
-  #plt.show()
-
   # zscore
   z = stats.zscore(x)
+
+  # scatter matrix
+  #plot_scatter_matrix(x)
+
+  # dendrogram
+  #plot_dendrogram(z.T)
+
+  # correlation
+  r = np.corrcoef(z.T)
+  plot_corr(r)
+
+  # covariance
+  C = np.cov(z.T)
+  plot_corr(C)
 
 
   # --

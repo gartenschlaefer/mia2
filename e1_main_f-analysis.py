@@ -16,7 +16,6 @@ from scipy.cluster import hierarchy
 # 3d plot
 from mpl_toolkits.mplot3d import Axes3D
 
-
 def plot_pca(x_pca):
   """
   plot pca in 2d and 3d
@@ -39,23 +38,20 @@ def plot_pca(x_pca):
   plt.tight_layout()
   plt.show()
 
-
 def plot_scatter_matrix(x, M=100, N=3):
   """
   plot a scatter matrix with pandas with M samples and N features
   """
-  pd.plotting.scatter_matrix(pd.DataFrame(x[:M, :N], columns=feature_names[:N]))
+  pd.plotting.scatter_matrix( pd.DataFrame(x[:M, :N], columns=feature_names[:N] ))
   plt.show()
-
 
 def plot_dendrogram(z):
   """
   plot a dendrogram
   """
   plt.figure()
-  dn = hierarchy.dendrogram(hierarchy.linkage(z, 'single'))
+  dn = hierarchy.dendrogram( hierarchy.linkage(z, 'single') )
   plt.show()
-
 
 def plot_corr(c):
   """
@@ -66,7 +62,6 @@ def plot_corr(c):
   plt.colorbar()
   plt.tight_layout()
   plt.show()
-
 
 # --
 # Main function
@@ -99,9 +94,8 @@ if __name__ == '__main__':
   # --
   # calculate pca
 
-  x_pca = calc_pca(x)
+  x_pca = calc_pca( x )
   #plot_pca(x_pca)
-
 
   # --
   # Data Visualization
@@ -123,29 +117,6 @@ if __name__ == '__main__':
   C = np.cov(z.T)
   plot_corr(C)
 
-
   # --
   # factor analysis
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

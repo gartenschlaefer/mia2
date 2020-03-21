@@ -4,6 +4,46 @@
 import numpy as np
 
 
+def sdm_mapping(sdm):
+  """
+  mapping function for sdm with tanh and iterative param search
+  """
+
+  # lib for otsu threshold
+  from skimage import filters
+  
+  # init
+  r = 0
+  k = 0.5
+  mu = 0.01
+  thr_min, thr_max = 0.05, 0.1
+  gamma = 0
+  S_map = np.zeros(sdm.shape)
+  lam = 1
+
+  # iterative algorithm
+  while r < thr_min or r > thr_max:
+
+    # get threshold
+    gamma = filters.threshold_otsu(sdm[sdm<k])
+
+    # tanh mapping
+    S_map = 0.5 - 0.5 * np.tanh(np.pi * lam * (sdm - gamma))
+
+    # recurrence rate
+    r = np.mean(S_map)
+
+    # update params
+    if r < thr_min:
+      k += mu
+    else:
+      k -= mu
+
+    print("otsu thresh:{}, r:{}, k:{}".format(gamma, r, k))
+
+  return S_map
+
+
 def calc_sdm(feat_frames, distance_measure='euclidean', emb=None):
   """
   calculate the self-distance matrix from frame feature vectors [n x m] i.e. [features x frames]

@@ -60,18 +60,33 @@ if __name__ == '__main__':
 
   sdm_chroma = calc_sdm(chroma)
   print("sdm: ", sdm_chroma.shape)
-  plot_sdm(sdm_chroma, plot_dir=plot_dir)
+  #plot_sdm(sdm_chroma, plot_dir=plot_dir)
 
 
   # --
   # Embedding Dimensions
 
-  for emb in range(1, 17):
+  emb_list = [16]
+  #emb_list = range(1, 17)
+
+  sdm_chroma_emb = np.zeros(sdm_chroma.shape)
+
+  for emb in emb_list:
     sdm_chroma_emb = calc_sdm(chroma, emb=emb)
     print("sdm emb: ", sdm_chroma_emb.shape)
-    plot_sdm(sdm_chroma_emb, plot_dir=plot_dir, emb=emb)
+    #plot_sdm(sdm_chroma_emb, plot_dir=plot_dir, emb=emb)
 
 
+  # --
+  # Reduction of irrelevant things
+
+  # normalization
+  sdm_chroma_emb = sdm_chroma_emb / np.max(sdm_chroma_emb)
+  print("min: {} max: {}".format(sdm_chroma_emb.min(), sdm_chroma_emb.max()) )
+
+  # sdm mapping
+  sdm_chroma_map = sdm_mapping(sdm_chroma_emb)
+  plot_sdm(sdm_chroma_emb)
 
 
 

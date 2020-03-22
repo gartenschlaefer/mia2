@@ -1,6 +1,5 @@
 # --
 # factor-analysis
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -15,6 +14,12 @@ from scipy.cluster import hierarchy
 
 # 3d plot
 from mpl_toolkits.mplot3d import Axes3D
+
+# Factor analysis 
+from factor_analyzer import FactorAnalyzer
+from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity
+from factor_analyzer.factor_analyzer import calculate_kmo
+
 
 def plot_pca(x_pca):
   """
@@ -36,6 +41,15 @@ def plot_pca(x_pca):
   ax.set_ylabel("PCA component 2")
   ax.set_zlabel("PCA component 3")
   plt.tight_layout()
+  plt.show()
+
+def plot_scree( eigen_values ):
+  plt.scatter( range( 1, eigen_values.shape[0] + 1) , eigen_values )
+  plt.plot( range( 1, eigen_values.shape[0] + 1) , eigen_values )
+  plt.title( "Scree Plot" )
+  plt.xlabel( "Number of eigenvalues" )
+  plt.ylabel( "Eigenvalue" )
+  plt.grid()
   plt.show()
 
 def plot_scatter_matrix(x, M=100, N=3):
@@ -84,18 +98,20 @@ if __name__ == '__main__':
   m, n = x.shape
 
   feature_names = [data['parameterAllName'][0, i][0] for i in range(n)]
-  
-  #print("feature_names: \n", feature_names)
-
   print("input data: ", x.shape)
   print("feature length: ", len(feature_names))
 
-
   # --
   # calculate pca
+  x_pca, eigen_values = calc_pca( x )
+  print( eigen_values.shape )
+  
+  # Plot the scatter-plot for the components
+  plot_pca(x_pca)
 
-  x_pca = calc_pca( x )
-  #plot_pca(x_pca)
+  # Plot the scree-plot for the componets
+  # Eigenvalues are not normalized
+  plot_scree( eigen_values )
 
   # --
   # Data Visualization
@@ -118,5 +134,14 @@ if __name__ == '__main__':
   plot_corr(C)
 
   # --
-  # factor analysis
+  # Adequacy test, needed to evaluate the 
+  # factorabiltiy of the given data set.
 
+  # Option One - Barlett's Test: 
+  chi_square_value, p_value = calculate_bartlett_sphericity( x )
+  print("chi-square value: {}\np-value: {}\n".format( 
+    chi_square_value, p_value ))
+  
+  # Option Two - Kaiser-Meyer-Olkin (KMO) Test:
+  kmo_all, kmo_model = calculate_kmo( x )
+  print("kmo-model score: {}".format( kmo_model ))

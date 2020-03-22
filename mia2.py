@@ -12,6 +12,6 @@ def calc_pca(x):
   eig_val, eig_vec = np.linalg.eig(np.cov(x, rowvar=False))
 
   # pca transformation
-  return np.dot(x, eig_vec)
+  return np.dot(x, eig_vec), eig_val
 
 

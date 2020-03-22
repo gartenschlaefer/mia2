@@ -154,6 +154,11 @@ if __name__ == '__main__':
   # first two eigenvalues have the biggest variance. 
   # 
   # Therefore the other 26 can be neglected for the analysis
-  fa = FactorAnalyzer( n_factors=2, rotation="varimax")
+  fa = FactorAnalyzer( n_factors=2, rotation="varimax", method="ml" )
   fa.fit( x )
-  print( fa.loadings_ )
+  
+  correlation_matrix = fa.corr_
+  factor_correlation_matrix = fa.phi_
+  factor_loading_matrix = fa.loadings_
+  rotation_matrix = fa.rotation_matrix_
+  

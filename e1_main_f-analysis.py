@@ -15,12 +15,17 @@ from scipy.cluster import hierarchy
 # 3d plot
 from mpl_toolkits.mplot3d import Axes3D
 
-# Factor analysis 
+# Factor analysis module written by Jeremy Biggs
+# For further information, see:
+#
+# https://pypi.org/project/factor-analyzer/
+# https://factor-analyzer.readthedocs.io/en/latest/index.html
+# https://factor-analyzer.readthedocs.io/en/latest/factor_analyzer.html
 from factor_analyzer import FactorAnalyzer
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity
 from factor_analyzer.factor_analyzer import calculate_kmo
 
-
+#------------------------------------------------------------------------------
 def plot_pca(x_pca):
   """
   plot pca in 2d and 3d
@@ -43,6 +48,7 @@ def plot_pca(x_pca):
   plt.tight_layout()
   plt.show()
 
+#------------------------------------------------------------------------------
 def plot_scree( eigen_values ):
   plt.scatter( range( 1, eigen_values.shape[0] + 1) , eigen_values )
   plt.plot( range( 1, eigen_values.shape[0] + 1) , eigen_values )
@@ -52,6 +58,7 @@ def plot_scree( eigen_values ):
   plt.grid()
   plt.show()
 
+#------------------------------------------------------------------------------
 def plot_scatter_matrix(x, M=100, N=3):
   """
   plot a scatter matrix with pandas with M samples and N features
@@ -59,6 +66,7 @@ def plot_scatter_matrix(x, M=100, N=3):
   pd.plotting.scatter_matrix( pd.DataFrame(x[:M, :N], columns=feature_names[:N] ))
   plt.show()
 
+#------------------------------------------------------------------------------
 def plot_dendrogram(z):
   """
   plot a dendrogram
@@ -67,6 +75,7 @@ def plot_dendrogram(z):
   dn = hierarchy.dendrogram( hierarchy.linkage(z, 'single') )
   plt.show()
 
+#------------------------------------------------------------------------------
 def plot_corr(c):
   """
   make image plot of correlation
@@ -77,7 +86,7 @@ def plot_corr(c):
   plt.tight_layout()
   plt.show()
 
-# --
+#------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
 
@@ -101,39 +110,32 @@ if __name__ == '__main__':
   print("input data: ", x.shape)
   print("feature length: ", len(feature_names))
 
-  # --
-  # calculate pca
+  #------------------------------------------------------------------------------
+  # Calculate pca and obtain eigen-values, cross-correlation vector and 
+  # covariance matrix.
   x_pca, eigen_values = calc_pca( x )
-  print( eigen_values.shape )
+  z = stats.zscore( x )
+  r = np.corrcoef( z.T )
+  C = np.cov( z.T )
   
-  # Plot the scatter-plot for the components
-  plot_pca(x_pca)
-
-  # Plot the scree-plot for the componets
-  # Eigenvalues are not normalized
-  plot_scree( eigen_values )
-
-  # --
+  #------------------------------------------------------------------------------
   # Data Visualization
 
-  # zscore
-  z = stats.zscore(x)
+  plot_scatter_matrix( x )  # Plot scatter matrix
+  plot_dendrogram( z.T )    # Plot dendrogram
+  plot_corr( r )            # Plot correlation
+  plot_corr( C )            # PLot covariance
 
-  # scatter matrix
-  #plot_scatter_matrix(x)
+  # Plot the scatter-plot for the components
+  plot_pca( x_pca )
 
-  # dendrogram
-  #plot_dendrogram(z.T)
+  # Plot the scree-plot for the componets
+  # Note:
+  #   - Eigenvalues are not normalized!
+  #   - Corresponding values are high!
+  plot_scree( eigen_values )
 
-  # correlation
-  r = np.corrcoef(z.T)
-  plot_corr(r)
-
-  # covariance
-  C = np.cov(z.T)
-  plot_corr(C)
-
-  # --
+  #------------------------------------------------------------------------------
   # Adequacy test, needed to evaluate the 
   # factorabiltiy of the given data set.
 
@@ -145,3 +147,13 @@ if __name__ == '__main__':
   # Option Two - Kaiser-Meyer-Olkin (KMO) Test:
   kmo_all, kmo_model = calculate_kmo( x )
   print("kmo-model score: {}".format( kmo_model ))
+
+  #------------------------------------------------------------------------------
+  # Performing factor analysis
+  # By inspecting the scree plot, one can see, that only the
+  # first two eigenvalues have the biggest variance. 
+  # 
+  # Therefore the other 26 can be neglected for the analysis
+  fa = FactorAnalyzer( n_factors=2, rotation="varimax")
+  fa.fit( x )
+  print( fa.loadings_ )

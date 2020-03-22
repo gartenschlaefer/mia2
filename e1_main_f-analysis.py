@@ -161,4 +161,4 @@ if __name__ == '__main__':
   factor_correlation_matrix = fa.phi_
   factor_loading_matrix = fa.loadings_
   rotation_matrix = fa.rotation_matrix_
-  
+ 

@@ -59,7 +59,7 @@ def plot_scree( eigen_values ):
   plt.show()
 
 #------------------------------------------------------------------------------
-def plot_scatter_matrix(x, M=100, N=3):
+def plot_scatter_matrix( x, M=100, N=3 ):
   """
   plot a scatter matrix with pandas with M samples and N features
   """
@@ -67,7 +67,7 @@ def plot_scatter_matrix(x, M=100, N=3):
   plt.show()
 
 #------------------------------------------------------------------------------
-def plot_dendrogram(z):
+def plot_dendrogram( z ):
   """
   plot a dendrogram
   """
@@ -76,7 +76,7 @@ def plot_dendrogram(z):
   plt.show()
 
 #------------------------------------------------------------------------------
-def plot_corr(c):
+def plot_corr( c ):
   """
   make image plot of correlation
   """
@@ -86,6 +86,38 @@ def plot_corr(c):
   plt.tight_layout()
   plt.show()
 
+#------------------------------------------------------------------------------
+def bi_plot( loadings ):
+  """ numpy array -> None
+  - This code segment is based on following stack overflow question:
+  https://bit.ly/39hDgD7 and plots a biplot like Matlab.
+
+  input parameters:
+  - loadings ...  numpy array of dimension N-by-M.
+                  N = # observerable features
+                  M = # latent features (loading factors)
+
+  output parameters:
+  - None
+  """
+
+  num_rows = loadings.shape[0]
+
+  for i in range( num_rows ):
+    plt.arrow( 0, 0, loadings[i, 0], loadings[i, 1], color='b', alpha=0.5 )
+    plt.text( loadings[i, 0] * 1.2, loadings[i, 1] * 1.2, "X" + str( i + 1 ),
+    ha='center', va='center')
+  
+  plt.xlim( -1, 1 )
+  plt.ylim( -1, 1 )
+
+  plt.title( "Contribution of variables to PC1 and PC2" )
+  plt.xlabel( "PC{}".format(1) )
+  plt.ylabel( "PC{}".format(2) )
+
+  plt.grid()
+  plt.show()  
+      
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
@@ -121,19 +153,19 @@ if __name__ == '__main__':
   #------------------------------------------------------------------------------
   # Data Visualization
 
-  plot_scatter_matrix( x )  # Plot scatter matrix
-  plot_dendrogram( z.T )    # Plot dendrogram
-  plot_corr( r )            # Plot correlation
-  plot_corr( C )            # PLot covariance
+  # plot_scatter_matrix( x )  # Plot scatter matrix
+  # plot_dendrogram( z.T )    # Plot dendrogram
+  # plot_corr( r )            # Plot correlation
+  # plot_corr( C )            # PLot covariance
 
   # Plot the scatter-plot for the components
-  plot_pca( x_pca )
+  # plot_pca( x_pca )
 
   # Plot the scree-plot for the componets
   # Note:
   #   - Eigenvalues are not normalized!
   #   - Corresponding values are high!
-  plot_scree( eigen_values )
+  # plot_scree( eigen_values )
 
   #------------------------------------------------------------------------------
   # Adequacy test, needed to evaluate the 
@@ -146,7 +178,7 @@ if __name__ == '__main__':
   
   # Option Two - Kaiser-Meyer-Olkin (KMO) Test:
   kmo_all, kmo_model = calculate_kmo( x )
-  print("kmo-model score: {}".format( kmo_model ))
+  print( "kmo-model score: {}".format( kmo_model ))
 
   #------------------------------------------------------------------------------
   # Performing factor analysis
@@ -162,3 +194,5 @@ if __name__ == '__main__':
   factor_loading_matrix = fa.loadings_
   rotation_matrix = fa.rotation_matrix_
  
+  # Biplot for loading factors
+  bi_plot( factor_loading_matrix )

@@ -87,7 +87,7 @@ def plot_corr( c ):
   plt.show()
 
 #------------------------------------------------------------------------------
-def bi_plot( loadings ):
+def bi_plot( loadings, xlim=None, ylim=None ):
   """ numpy array -> None
   - This code segment is based on following stack overflow question:
   https://bit.ly/39hDgD7 and plots a biplot like Matlab.
@@ -108,15 +108,18 @@ def bi_plot( loadings ):
     plt.text( loadings[i, 0] * 1.2, loadings[i, 1] * 1.2, "X" + str( i + 1 ),
     ha='center', va='center')
   
-  plt.xlim( -1, 1 )
-  plt.ylim( -1, 1 )
+  if xlim is not None:
+    plt.xlim( xlim )
+
+  if ylim is not None:
+    plt.ylim( ylim )
 
   plt.title( "Contribution of variables to PC1 and PC2" )
   plt.xlabel( "PC{}".format(1) )
   plt.ylabel( "PC{}".format(2) )
 
   plt.grid()
-  plt.show()  
+  #plt.show()  
       
 #------------------------------------------------------------------------------
 # Main function
@@ -129,15 +132,25 @@ if __name__ == '__main__':
   file_name_data = 'data.mat'
   file_name_tables = 'tables.mat'
 
+  # desired vehicles
+  veh_nums = [2, 248, 250, 257]
+
   # load file
   data = loadmat(file_dir + file_name_data)
-  #tables = loadmat(file_dir + file_name_tables)
-  #print("tables: ", tables)
+  tables = loadmat(file_dir + file_name_tables)
 
-  # extract data [samples x features]
+  # extract data of desired vehicles
+  veh = [tables['tables'][i][0] for i in veh_nums]
+  lamborgini, audi, bmw, lexus = veh[0], veh[1], veh[2], veh[3]
+  v_names = [lamborgini[0], audi[0], bmw[0], lexus[0]]
+  v_data = [lamborgini[5], audi[5], bmw[5], lexus[5]]
+  print("desired vehicles: ", v_names)
+
+  # extract data from training matrix [samples x features]
   x = data['Xr']
   m, n = x.shape
 
+  # get features
   feature_names = [data['parameterAllName'][0, i][0] for i in range(n)]
   print("input data: ", x.shape)
   print("feature length: ", len(feature_names))
@@ -187,12 +200,33 @@ if __name__ == '__main__':
   # 
   # Therefore the other 26 can be neglected for the analysis
   fa = FactorAnalyzer( n_factors=2, rotation="varimax", method="ml" )
-  fa.fit( x )
+  fa.fit( z )
   
   correlation_matrix = fa.corr_
   factor_correlation_matrix = fa.phi_
   factor_loading_matrix = fa.loadings_
   rotation_matrix = fa.rotation_matrix_
- 
+
+  print("loadings: ", fa.loadings_.shape)
+  
+  # overall plot of factor space
+  plt.figure()
+
   # Biplot for loading factors
-  bi_plot( factor_loading_matrix )
+  bi_plot( factor_loading_matrix, xlim=[-1.5, 1.5], ylim=[-3, 3])
+
+  # vehicle scatter
+  for i, v in enumerate(v_data):
+
+    # do zscoring
+    z = stats.zscore( v[:, :28] )
+
+    # transform to factor space
+    tf = fa.transform(z)
+
+    # plot
+    plt.scatter(tf[:, 0], tf[:, 1], s=5, label=str(v_names[i]))
+
+  plt.legend()
+  plt.show()
+

@@ -4,6 +4,36 @@
 import numpy as np
 
 
+def calc_recurrence_matrix(sdm, n_cols=2):
+  """
+  calc the recurrence matrix from sdm matrix with the template matching algorithm
+  """
+  
+  from skimage.util import view_as_windows
+
+  # init
+  R = np.zeros(sdm.shape) 
+
+  # shape
+  m, n = sdm.shape
+
+  # get templates from sdm matrix
+  T = view_as_windows(np.pad(sdm, ((0, 0), (0, n_cols-1))), (m, n_cols), step=1)
+
+  print("T: ", T.shape)
+
+  return R
+
+
+
+
+def tanh_mapping(x, gamma=0.5, lam=2):
+  """
+  tanh mapping function
+  """
+  return 0.5 - 0.5 * np.tanh(np.pi * lam * (x - gamma))
+
+
 def sdm_mapping(sdm):
   """
   mapping function for sdm with tanh and iterative param search
@@ -28,7 +58,7 @@ def sdm_mapping(sdm):
     gamma = filters.threshold_otsu(sdm[sdm<k])
 
     # tanh mapping
-    S_map = 0.5 - 0.5 * np.tanh(np.pi * lam * (sdm - gamma))
+    S_map = tanh_mapping(sdm, gamma, 1/gamma)
 
     # recurrence rate
     r = np.mean(S_map)

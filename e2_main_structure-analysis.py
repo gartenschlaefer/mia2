@@ -46,7 +46,6 @@ if __name__ == '__main__':
   # load file
   data = loadmat(file_dir + file_name_data)
 
-
   # --
   # extract features
 

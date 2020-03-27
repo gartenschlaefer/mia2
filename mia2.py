@@ -4,9 +4,9 @@
 import numpy as np
 
 
-def calc_recurrence_matrix(sdm, n_cols=2):
+def calc_recurrence_matrix(sdm, w=4):
   """
-  calc the recurrence matrix from sdm matrix with the template matching algorithm
+  calc the recurrence matrix from the sdm matrix with the template matching algorithm - ncc
   """
   
   from skimage.util import view_as_windows
@@ -18,13 +18,24 @@ def calc_recurrence_matrix(sdm, n_cols=2):
   m, n = sdm.shape
 
   # get templates from sdm matrix
-  T = view_as_windows(np.pad(sdm, ((0, 0), (0, n_cols-1))), (m, n_cols), step=1)
+  Templates = np.squeeze(view_as_windows(np.pad(sdm, ((0, 0), (0, w-1))), (m, w), step=1)).reshape(m, n*w)
 
-  print("T: ", T.shape)
+  # substract mean
+  T_tilde = Templates - np.mean(Templates, axis=1)[:, np.newaxis]
+
+  # calculate norm
+  T_norm = np.linalg.norm(T_tilde, axis=1)
+
+  # ncc - run through each template
+  for k, Tk in enumerate(T_tilde):
+
+    # search image
+    for l in range(m-k-1):
+
+      # correlation with norm
+      R[l, k] = (Tk / T_norm[k]) @ (T_tilde[k+l+1] / T_norm[k+l+1])
 
   return R
-
-
 
 
 def tanh_mapping(x, gamma=0.5, lam=2):
@@ -68,8 +79,6 @@ def sdm_mapping(sdm):
       k += mu
     else:
       k -= mu
-
-    print("otsu thresh:{}, r:{}, k:{}".format(gamma, r, k))
 
   return S_map
 

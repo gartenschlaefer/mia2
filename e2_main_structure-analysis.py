@@ -14,12 +14,12 @@ from scipy import stats
 from scipy.cluster import hierarchy
 
 
-def plot_sdm(sdm, vmin=None, vmax=None, cmap='magma', plot_dir=None, emb=None, suffix=''):
+def plot_sdm(sdm, cmap='magma', plot_dir=None, emb=None, suffix=''):
   """
   plot sdm matrix (simple imshow)
   """
   plt.figure()
-  plt.imshow(sdm[::-1, :], aspect='auto', vmin=vmin, vmax=vmax, cmap=cmap, extent=[0, len(sdm), 0, len(sdm)])
+  plt.imshow(sdm[::-1, :], aspect='auto', cmap=cmap, extent=[0, len(sdm), 0, len(sdm)])
   plt.ylabel('frames')
   plt.xlabel('frames')
   plt.colorbar()
@@ -55,7 +55,7 @@ def plot_tanh():
   plt.show()
 
 
-def get_mapped_sdm(chroma, plot_dir, read_from_file=False):
+def get_mapped_sdm(chroma, plot_dir, emb=16, read_from_file=False):
   """
   get the mapped and embedded sdm matrix
   """
@@ -71,7 +71,7 @@ def get_mapped_sdm(chroma, plot_dir, read_from_file=False):
   sdm_chroma = calc_sdm(chroma)
   #plot_sdm(sdm_chroma, plot_dir=plot_dir)
 
-  emb_list = [16]
+  emb_list = [emb]
   #emb_list = range(1, 17)
 
   sdm_chroma_emb = np.zeros(sdm_chroma.shape)
@@ -122,16 +122,27 @@ if __name__ == '__main__':
   # about tanh mapping
   #plot_tanh()
 
+  # embedding frames
+  emb = 16
+
   # get sdm mapped
-  sdm_chroma_map = get_mapped_sdm(chroma, plot_dir, read_from_file=True)
+  sdm_chroma_map = get_mapped_sdm(chroma, plot_dir, emb=emb, read_from_file=True)
+
   #plot_sdm(sdm_chroma_map)
-  print("sdm: ", sdm_chroma_map.shape)
+  print("sdm mapped: ", sdm_chroma_map.shape)
 
 
   # --
   # Template matching
 
-  R = calc_recurrence_matrix(sdm_chroma_map, n_cols=2)
+  #for w in [4, 8, 16, 3, 9, 12]:
+  for w in [8]:
+
+    # recurrence matrix
+    R = calc_recurrence_matrix(sdm_chroma_map, w=w)
+
+    # plot
+    plot_sdm(R, plot_dir=plot_dir, emb=emb, suffix='ncc-w-{}'.format(w))
 
 
 

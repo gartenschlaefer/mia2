@@ -4,6 +4,55 @@
 import numpy as np
 
 
+def matrix_otsu_thresh(R, lower_bound=0.5):
+  """
+  otsu threshold on matrix row, with lower value bound as ignore vals
+  """
+
+  from skimage import filters
+
+  # init
+  R_bin = np.zeros(R.shape)
+
+  # run through each row
+  for row in range(R.shape[0]):
+
+    # valid values
+    valid = R[row]>=lower_bound
+
+    # no valid values (needs some values for thresh)
+    if np.sum(valid) <= 3:
+      continue
+
+    # get otsu thresh
+    thresh_row = filters.threshold_otsu(R[row][valid])
+
+    # binarized matrix
+    R_bin[row][R[row]>=thresh_row] = 1
+
+  return R_bin
+
+
+def matrix_median(R, n_med=4):
+  """
+  median filtering on matrix rows
+  """
+
+  from skimage.util import view_as_windows
+
+  # half median size
+  n_h = n_med // 2
+
+  # shape
+  m, n = R.shape
+
+  # filter matrix to be filtered
+  R_fil = view_as_windows(np.pad(R, ((0, 0), (n_h, n_h))), (1, n_med+1), step=1).reshape(m, n, n_med+1)
+
+  return np.median(R_fil, axis=2)
+
+
+
 def calc_recurrence_matrix(sdm, w=4):
   """
   calc the recurrence matrix from the sdm matrix with the template matching algorithm - ncc

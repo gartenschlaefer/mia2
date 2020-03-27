@@ -3,15 +3,12 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 
 # my personal mia lib
 from mia2 import *
 
 # other stuff
 from scipy.io import loadmat
-from scipy import stats
-from scipy.cluster import hierarchy
 
 
 def plot_sdm(sdm, cmap='magma', plot_dir=None, emb=None, suffix=''):
@@ -142,7 +139,30 @@ if __name__ == '__main__':
     R = calc_recurrence_matrix(sdm_chroma_map, w=w)
 
     # plot
-    plot_sdm(R, plot_dir=plot_dir, emb=emb, suffix='ncc-w-{}'.format(w))
+    #plot_sdm(R, plot_dir=plot_dir, emb=emb, suffix='ncc-w-{}'.format(w))
+
+
+  # median filter length
+  n_med = 4
+
+  # median filtering
+  R_med = matrix_median(R, n_med=n_med)
+  
+  # plot
+  #plot_sdm(R_med, plot_dir=plot_dir, emb=emb, suffix='ncc-w-{}_med-{}'.format(w, n_med))
+
+  # otsu thresholding
+  R_bin = matrix_otsu_thresh(R_med, lower_bound=0.5)
+
+  # plot
+  #plot_sdm(R_bin, cmap='Greys', plot_dir=plot_dir, emb=emb, suffix='ncc-w-{}_med-{}_bin'.format(w, n_med))
+  plot_sdm(R_bin, cmap='Greys')
+
+
+
+
+
+
 
 
 

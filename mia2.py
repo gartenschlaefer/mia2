@@ -4,9 +4,58 @@
 import numpy as np
 
 
-def calc_recurrence_matrix(sdm, n_cols=2):
+def matrix_otsu_thresh(R, lower_bound=0.5):
   """
-  calc the recurrence matrix from sdm matrix with the template matching algorithm
+  otsu threshold on matrix row, with lower value bound as ignore vals
+  """
+
+  from skimage import filters
+
+  # init
+  R_bin = np.zeros(R.shape)
+
+  # run through each row
+  for row in range(R.shape[0]):
+
+    # valid values
+    valid = R[row]>=lower_bound
+
+    # no valid values (needs some values for thresh)
+    if np.sum(valid) <= 3:
+      continue
+
+    # get otsu thresh
+    thresh_row = filters.threshold_otsu(R[row][valid])
+
+    # binarized matrix
+    R_bin[row][R[row]>=thresh_row] = 1
+
+  return R_bin
+
+
+def matrix_median(R, n_med=4):
+  """
+  median filtering on matrix rows
+  """
+
+  from skimage.util import view_as_windows
+
+  # half median size
+  n_h = n_med // 2
+
+  # shape
+  m, n = R.shape
+
+  # filter matrix to be filtered
+  R_fil = view_as_windows(np.pad(R, ((0, 0), (n_h, n_h))), (1, n_med+1), step=1).reshape(m, n, n_med+1)
+
+  return np.median(R_fil, axis=2)
+
+
+
+def calc_recurrence_matrix(sdm, w=4):
+  """
+  calc the recurrence matrix from the sdm matrix with the template matching algorithm - ncc
   """
   
   from skimage.util import view_as_windows
@@ -18,13 +67,24 @@ def calc_recurrence_matrix(sdm, n_cols=2):
   m, n = sdm.shape
 
   # get templates from sdm matrix
-  T = view_as_windows(np.pad(sdm, ((0, 0), (0, n_cols-1))), (m, n_cols), step=1)
+  Templates = np.squeeze(view_as_windows(np.pad(sdm, ((0, 0), (0, w-1))), (m, w), step=1)).reshape(m, n*w)
 
-  print("T: ", T.shape)
+  # substract mean
+  T_tilde = Templates - np.mean(Templates, axis=1)[:, np.newaxis]
+
+  # calculate norm
+  T_norm = np.linalg.norm(T_tilde, axis=1)
+
+  # ncc - run through each template
+  for k, Tk in enumerate(T_tilde):
+
+    # search image
+    for l in range(m-k-1):
+
+      # correlation with norm
+      R[l, k] = (Tk / T_norm[k]) @ (T_tilde[k+l+1] / T_norm[k+l+1])
 
   return R
-
-
 
 
 def tanh_mapping(x, gamma=0.5, lam=2):
@@ -68,8 +128,6 @@ def sdm_mapping(sdm):
       k += mu
     else:
       k -= mu
-
-    print("otsu thresh:{}, r:{}, k:{}".format(gamma, r, k))
 
   return S_map
 

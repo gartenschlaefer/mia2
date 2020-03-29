@@ -52,7 +52,6 @@ def matrix_median(R, n_med=4):
   return np.median(R_fil, axis=2)
 
 
-
 def calc_recurrence_matrix(sdm, w=4):
   """
   calc the recurrence matrix from the sdm matrix with the template matching algorithm - ncc

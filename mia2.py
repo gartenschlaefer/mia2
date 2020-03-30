@@ -3,7 +3,49 @@
 
 import numpy as np
 
+# Lecture 3:-------------------------------------------------------------------
+def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
+  """ numpy array, float, float  -> numpy array 
+  
+  Nonlinear mapping function for the estimation of the fundamental
+  distribution. 
 
+  For further information see 'Specmurt Analysis of Polyphonic Music Signals';
+  in IEEE Transactions on Audio Speech and language Processing, April 2008 by
+  Kameoka,H.; Sagayama S., in particular: Section 4.A.
+
+  As a nonlinear function, a sigmoid function or a hard 
+  threshholding can be used:
+
+  u_bar(x)  = u(x) / (1 + exp{-alpha( u(x)/u_max - beta)} ),
+  u_max     = max{u(x)} for all x (x -> log-scaled frequency) 
+
+  input params (see equation 13 of the same paper):
+  -------------------------------------------------
+  @u      ... numpy array containing the powerspectrum, log-frequency  scaled.
+  @alpha  ... represents a degree o f fuzziness
+  @beta   ... threshhold magnitude paramter, corresponds to the value under 
+              which frequency components are assumed to be unwanted.
+
+  output params (see equation 14 of the same paper):
+  --------------------------------------------------
+  @u_bar  ... estimate of the fundamental frequency distribution
+
+  """
+  
+  u_max = np.max( u )
+  u_bar =  u / (1 + np.exp( -alpha * (u / u_max - beta )))
+
+  return u_bar
+
+
+def common_harmonic_structure_etsimation():
+  """
+  
+  """
+  print('CHS')
+
+# Lecture 2:-------------------------------------------------------------------
 def matrix_otsu_thresh(R, lower_bound=0.5):
   """
   otsu threshold on matrix row, with lower value bound as ignore vals
@@ -164,6 +206,7 @@ def calc_sdm(feat_frames, distance_measure='euclidean', emb=None):
   return sdm
 
 
+# Lecture 1:-------------------------------------------------------------------
 def calc_pca(x):
   """
   calculate pca of signal, already ordered, n x m (samples x features)

@@ -11,4 +11,4 @@ from mia2 import *
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
-    print('test')
+    non_linear_mapping( )

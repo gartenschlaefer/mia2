@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from mia2 import *
 
 # Librosa module for calculating the Constant-Q Transform
-
+import librosa.core.constantq as qt
 
 #------------------------------------------------------------------------------
 # Main function

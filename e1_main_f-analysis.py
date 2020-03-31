@@ -93,12 +93,12 @@ def bi_plot( loadings, xlim=None, ylim=None ):
   https://bit.ly/39hDgD7 and plots a biplot like Matlab.
 
   input parameters:
-  - loadings ...  numpy array of dimension N-by-M.
+  @loadings ...  numpy array of dimension N-by-M.
                   N = # observerable features
                   M = # latent features (loading factors)
 
   output parameters:
-  - None
+  None
   """
 
   num_rows = loadings.shape[0]

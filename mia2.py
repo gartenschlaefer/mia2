@@ -39,7 +39,7 @@ def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
   return u_bar
 
 
-def common_harmonic_structure_etsimation():
+def common_harmonic_structure_estimation():
   """
   
   """

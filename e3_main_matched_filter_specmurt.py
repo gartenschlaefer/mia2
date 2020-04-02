@@ -87,11 +87,6 @@ if __name__ == '__main__':
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
-<<<<<<< HEAD
-
-=======
     
->>>>>>> b932101f435b694abd2953792ff877c22f213555
-
     # Non-linear mapping function----------------------------------------------
     non_linear_mapping( )

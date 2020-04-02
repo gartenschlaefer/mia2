@@ -48,6 +48,14 @@ def initial_harmonics( list_hormonics,
                    
     return common_harmonic_structure  
 
+def plot_harmonic_structure( common_harmonic_structure ):
+    
+    plt.stem( common_harmonic_structure, linefmt=None, markerfmt=None, 
+        basefmt=None, use_line_collection=True)
+    plt.xlabel( 'Log-freq. bin number' )
+    plt.ylabel( 'Relative amplitude of harmonic component' )
+    plt.show()
+
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
@@ -79,7 +87,11 @@ if __name__ == '__main__':
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b932101f435b694abd2953792ff877c22f213555
 
     # Non-linear mapping function----------------------------------------------
     non_linear_mapping( )

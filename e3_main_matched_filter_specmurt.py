@@ -48,13 +48,6 @@ def initial_harmonics( list_harmonics,
                    
     return common_harmonic_structure  
 
-def plot_harmonic_structure( common_harmonic_structure ):
-    plt.stem( common_harmonic_structure, linefmt=None, markerfmt=None, 
-        basefmt=None, use_line_collection=True)
-    plt.xlabel( 'Log-freq. bin number' )
-    plt.ylabel( 'Relative amplitude of harmonic component' )
-    plt.show()
-
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':

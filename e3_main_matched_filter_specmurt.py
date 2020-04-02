@@ -20,21 +20,51 @@ def plot_CQT_spectrum( cqt_spectrum ):
     plt.show()
 
 #------------------------------------------------------------------------------
+def initial_harmonics( list_hormonics, 
+    common_harmonic_structure, option=0 ):
+    
+    if option == 0:
+        common_harmonic_structure[ list_hormonics ] = 1
+    
+    elif (option == 1) or (option == 2):
+        for index, elem in enumerate( list_hormonics, 1 ):
+            
+            if option == 1:
+                common_harmonic_structure[ elem ] = 1 / np.sqrt( index )
+
+            if option == 2:
+                common_harmonic_structure[ elem ] = 1 / index
+
+    else:
+        print( "No other options available!" )
+                   
+    return common_harmonic_structure    
+
+#------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
     
     # Loading file in memory 
-    file_name = 'Cmaj7_9.wav'
+    file_name = 'Cmaj.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
      
     audio_data, sampling_rate = libr.load( full_name, sr=None )
 
     # Compute and plot CQT
-    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, fmin=50, 
-        n_bins=120, bins_per_octave=24 )
-    
+    # - One frequency bin has a length of 1379 (for Cmaj.wav)
+    # - 48 bins in total -> 48 times 1379 
+    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, fmin=110, 
+        n_bins=24, bins_per_octave=12 )
     plot_CQT_spectrum( cqt_spectrum )
     
+    # Define common harmonic structure
+    # - number of frequency bins is the same as for the cqt -> n_bins = 48
+    list_hormonics = [0, 12, 19, 24, 28, 31]
+    common_harmonic_structure = np.zeros(( 48, 1 ))
+
+    common_harmonic_structure = initial_harmonics( list_hormonics, 
+        common_harmonic_structure, option=1 )
+
     #--------------------------------------------------------------------------
     non_linear_mapping( )

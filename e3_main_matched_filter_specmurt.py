@@ -28,14 +28,14 @@ def plot_harmonic_structure( common_harmonic_structure ):
     plt.show()
 
 #------------------------------------------------------------------------------
-def initial_harmonics( list_hormonics, 
+def initial_harmonics( list_harmonics, 
     common_harmonic_structure, option=0 ):
     
     if option == 0:
-        common_harmonic_structure[ list_hormonics ] = 1
+        common_harmonic_structure[ list_harmonics ] = 1
     
     elif (option == 1) or (option == 2):
-        for index, elem in enumerate( list_hormonics, 1 ):
+        for index, elem in enumerate( list_harmonics, 1 ):
             
             if option == 1:
                 common_harmonic_structure[ elem ] = 1 / np.sqrt( index )
@@ -49,7 +49,6 @@ def initial_harmonics( list_hormonics,
     return common_harmonic_structure  
 
 def plot_harmonic_structure( common_harmonic_structure ):
-    
     plt.stem( common_harmonic_structure, linefmt=None, markerfmt=None, 
         basefmt=None, use_line_collection=True)
     plt.xlabel( 'Log-freq. bin number' )
@@ -75,10 +74,10 @@ if __name__ == '__main__':
    
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
-    list_hormonics = [0, 12, 19, 24, 28, 31]
+    list_harmonics = [0, 12, 19, 24, 28, 31]
     common_harmonic_structure = np.zeros(( 48, 1 ))
 
-    common_harmonic_structure = initial_harmonics( list_hormonics, 
+    common_harmonic_structure = initial_harmonics( list_harmonics, 
         common_harmonic_structure, option=2 )
     
     # Plots so far-------------------------------------------------------------
@@ -87,11 +86,6 @@ if __name__ == '__main__':
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
-<<<<<<< HEAD
-
-=======
     
->>>>>>> b932101f435b694abd2953792ff877c22f213555
-
     # Non-linear mapping function----------------------------------------------
     non_linear_mapping( )

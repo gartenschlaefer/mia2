@@ -64,13 +64,8 @@ if __name__ == '__main__':
     # Compute and plot CQT-----------------------------------------------------
     # - One frequency bin has a length of 1379 (for Cmaj.wav)
     # - 48 bins in total -> 48 times 1379 
-    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate,  hop_length=128, 
+    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=128, 
         fmin=110, n_bins=48, bins_per_octave=12 )
-<<<<<<< HEAD
-=======
-
-    print( cqt_spectrum.shape )
->>>>>>> 9b2ddc65fb57aaea97758afbf16f0213251ad2b3
    
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
@@ -84,8 +79,8 @@ if __name__ == '__main__':
     
 
     # Plots so far-------------------------------------------------------------
-    plot_CQT_spectrum( cqt_spectrum )
-    plot_harmonic_structure( common_harmonic_structure )
+    # plot_CQT_spectrum( cqt_spectrum )
+    # plot_harmonic_structure( common_harmonic_structure )
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
@@ -96,9 +91,7 @@ if __name__ == '__main__':
     estimate_freq_distro = np.multiply( inv_observed_spectrum, 
         np.conj(inv_harm_struct ))
 
-    # Only the 
     estimate_freq_distro = estimate_freq_distro[0 , : ]
-    print( estimate_freq_distro.shape )
 
     # Non-linear mapping function----------------------------------------------
-    non_linear_mapping( )
+    # non_linear_mapping( )

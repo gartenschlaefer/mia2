@@ -4,6 +4,33 @@
 import numpy as np
 
 # Lecture 3:-------------------------------------------------------------------
+
+def get_onset_mat(file_name, var_name='GTF0s'):
+  """
+  reads a .mat file with midi notes and gives back
+  onsets and the corresponding midi notes
+  """
+
+  from scipy.io import loadmat
+
+  # read mat files
+  mat = loadmat(file_name)
+
+  # get midi notes with funcdamental frequencies
+  m = np.round(mat[var_name])
+
+  # gradients of notes
+  onsets = np.pad(np.diff(m), ((0, 0), (0, 1)))
+
+  # set onsets to one
+  onsets[np.abs(onsets) > 0] = 1
+
+  # get time vector
+  t = np.arange(0.023, 0.023+0.01*(m.shape[1]), 0.01);
+
+  return (onsets, m, t)
+
+
 def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
   """ numpy array, float, float  -> numpy array 
   

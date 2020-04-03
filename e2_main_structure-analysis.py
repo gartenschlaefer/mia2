@@ -123,7 +123,7 @@ if __name__ == '__main__':
   emb = 16
 
   # get sdm mapped
-  sdm_chroma_map = get_mapped_sdm(chroma, plot_dir, emb=emb, read_from_file=True)
+  sdm_chroma_map = get_mapped_sdm(chroma, plot_dir, emb=emb, read_from_file=False)
 
   #plot_sdm(sdm_chroma_map)
   print("sdm mapped: ", sdm_chroma_map.shape)

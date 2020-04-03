@@ -33,7 +33,7 @@ def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
 
   """
   
-  u_max = np.max( u )
+  u_max = np.max( u, axis=0 )
   u_bar =  u / (1 + np.exp( -alpha * (u / u_max - beta )))
 
   return u_bar

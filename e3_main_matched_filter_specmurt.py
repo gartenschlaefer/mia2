@@ -6,17 +6,18 @@ from scipy.fftpack import fft, ifft
 
 # my personal mia lib
 from mia2 import non_linear_mapping
+from mia2 import get_onset_mat
 
 # Librosa module for calculating the Constant-Q Transform
 import librosa as libr
 from librosa.display import specshow
 
 #------------------------------------------------------------------------------
-def plot_CQT_spectrum( cqt_spectrum ):
+def plot_CQT_spectrum( cqt_spectrum, sr, hop ):
 
     plt.figure(figsize=(8,4))
     specshow( libr.amplitude_to_db( np.abs(cqt_spectrum), ref=np.max),
-        sr=sampling_rate, x_axis='time', y_axis='cqt_note')
+        sr=sr, x_axis='time', y_axis='cqt_note', hop_length=hop)
     
     plt.colorbar( format='%+2.0f dB' )
     plt.title( 'Constant-Q power spectrum' )
@@ -105,13 +106,19 @@ if __name__ == '__main__':
     file_name = 'Cmaj.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
+
+    # file name to mat file with onsets and midi notes
+    mat_file_name = '01-AchGottundHerr-GTF0s.mat'
      
-    audio_data, sampling_rate = libr.load( full_name, sr=None )
+    audio_data, sampling_rate = libr.load( full_name, sr=44100 )
+
+    # hop length
+    hop = 128
 
     # Compute and plot CQT-----------------------------------------------------
     # - One frequency bin has a length of 1379 (for Cmaj.wav)
     # - 48 bins in total -> 48 times 1379 
-    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=128, 
+    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
         fmin=110, n_bins=48, bins_per_octave=12 )
    
     # Define common harmonic structure-----------------------------------------
@@ -126,7 +133,7 @@ if __name__ == '__main__':
     
 
     # Plots so far-------------------------------------------------------------
-    #plot_CQT_spectrum( cqt_spectrum )
+    #plot_CQT_spectrum( cqt_spectrum, sampling_rate, hop )
     #plot_harmonic_structure( common_harmonic_structure )
     
     # Initial guess for fundamental frequency distribution---------------------
@@ -155,4 +162,16 @@ if __name__ == '__main__':
     print("u_bar: ", u_bar.shape)
   
     # plot whole pipeline    
-    plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar )
+    #plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar )
+
+
+    # get the onsets and midi notes of the audiofile
+    onsets, m, t = get_onset_mat(file_path + mat_file_name)
+
+    # print("onsets: ", onsets.shape)
+    # print("midi: ", m.shape)
+
+    # plt.figure()
+    # plt.plot(t, onsets.T)
+    # plt.plot(t, m.T)
+    # plt.show()

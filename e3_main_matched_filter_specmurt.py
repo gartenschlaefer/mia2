@@ -53,8 +53,9 @@ def initial_harmonics( list_harmonics,
     
     return common_harmonic_structure  
 
-
-def plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar ):
+#------------------------------------------------------------------------------
+def plot_pipeline( inv_observed_spectrum, inv_harm_struct, 
+    estimate_freq_distro, u, u_bar ):
   """
   plot pipeline of the algorithm
   """
@@ -96,27 +97,23 @@ def plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro,
   plt.xlabel("frames")
   plt.show()
 
-
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
     
     # Loading file in memory 
-    file_name = 'A1.wav'
+    file_name = '01-AchGottundHerr_4Kanal.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
-     
+
     audio_data, sampling_rate = libr.load( full_name, sr=None )
+    # audio_data, sampling_rate = libr.load( libr.util.example_audio_file() )
 
     # Compute and plot CQT-----------------------------------------------------
     # - One frequency bin has a length of 1379 (for Cmaj.wav)
     # - 48 bins in total -> 48 times 1379 
     cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=128, 
-<<<<<<< HEAD
-        fmin=50, n_bins=48, bins_per_octave=12 )
-=======
         fmin=110, n_bins=48, bins_per_octave=12 )
->>>>>>> db4edca8bf950a77f5afb149907ab4d8adbc4a15
    
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
@@ -127,48 +124,35 @@ if __name__ == '__main__':
         common_harmonic_structure, option=1 )
 
     # Plots so far-------------------------------------------------------------
-    #plot_CQT_spectrum( cqt_spectrum )
+    plot_CQT_spectrum( cqt_spectrum )
     #plot_harmonic_structure( common_harmonic_structure )
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
 
     n_samples = 128
-<<<<<<< HEAD
-    inv_observed_spectrum = ifft( cqt_spectrum , n_samples )
-    inv_harm_struct = ifft( common_harmonic_structure, n_samples )
-
-=======
-    inv_observed_spectrum = ifft( cqt_spectrum, n_samples, axis=0)
+    squared_cqt_spectrum  = np.power( np.abs( cqt_spectrum ), 2 )
+    inv_squared_spectrum = ifft( squared_cqt_spectrum, n_samples, axis=0)
+    
     inv_harm_struct = ifft( common_harmonic_structure, n_samples, axis=0)
 
     # estimate
->>>>>>> db4edca8bf950a77f5afb149907ab4d8adbc4a15
-    estimate_freq_distro = np.multiply( inv_observed_spectrum, 
+    estimate_freq_distro = np.multiply( inv_squared_spectrum, 
       np.conj(inv_harm_struct ))
 
     # fundamental frequency distribution
     u = fft(estimate_freq_distro, axis=0)
 
-<<<<<<< HEAD
-    estimate_freq_distro = np.absolute( estimate_freq_distro[0 , : ] )
-    plt.plot( estimate_freq_distro )
-    plt.show()
-
-    # Non-linear mapping function----------------------------------------------
-    # non_linear_mapping( )
-=======
     #estimate_freq_distro = estimate_freq_distro[0 , : ]
 
     # Non-linear mapping function----------------------------------------------
     u_bar = non_linear_mapping( u )
 
     # check shapes
-    print("inv_observed_spectrum: ", inv_observed_spectrum.shape)
-    print("inv_harm_struct: ", inv_harm_struct.shape)
-    print("u: ", u.shape)
-    print("u_bar: ", u_bar.shape)
-  
+    # print("inv_observed_spectrum: ", inv_squared_spectrum.shape)
+    # print("inv_harm_struct: ", inv_harm_struct.shape)
+    # print("u: ", u.shape)
+    # print("u_bar: ", u_bar.shape)
+
     # plot whole pipeline    
-    plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar )
->>>>>>> db4edca8bf950a77f5afb149907ab4d8adbc4a15
+    plot_pipeline( inv_squared_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar )

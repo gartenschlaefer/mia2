@@ -61,10 +61,10 @@ def plot_pipeline( inv_observed_spectrum, inv_harm_struct,
   plot pipeline of the algorithm
   """
   s_frame = 0
-  t_frame = 150
+  t_frame = 1000
 
   plt.figure()
-  plt.imshow(np.abs(inv_observed_spectrum[:, s_frame:t_frame]))
+  plt.imshow(np.abs(inv_observed_spectrum[:, s_frame:t_frame]), aspect='auto')
   plt.title("inv observed spectrum")
   plt.ylabel("time (specmurt)")
   plt.xlabel("frames")
@@ -78,21 +78,21 @@ def plot_pipeline( inv_observed_spectrum, inv_harm_struct,
   #plt.show()
 
   plt.figure()
-  plt.imshow(np.abs(estimate_freq_distro[:, s_frame:t_frame]))
+  plt.imshow(np.abs(estimate_freq_distro[:, s_frame:t_frame]), aspect='auto')
   plt.title("V / H")
   plt.ylabel("time (specmurt)")
   plt.xlabel("frames")
   #plt.show()
 
   plt.figure()
-  plt.imshow(np.abs(u[:, s_frame:t_frame]))
+  plt.imshow(np.abs(u[:, s_frame:t_frame]), aspect='auto')
   plt.title("u = fft(V / H)")
   plt.ylabel("frequency")
   plt.xlabel("frames")
   #plt.show()
 
   plt.figure()
-  plt.imshow(np.abs(u_bar[:, s_frame:t_frame]))
+  plt.imshow(np.abs(u_bar[:, s_frame:t_frame]), aspect='auto')
   plt.title("u bar")
   plt.ylabel("frequency")
   plt.xlabel("frames")
@@ -107,18 +107,21 @@ if __name__ == '__main__':
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
 
+    # sampling rate
+    fs = 44100
+
     # file name to mat file with onsets and midi notes
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
-    audio_data, sampling_rate = libr.load( full_name, sr=44100 )
+    audio_data, sampling_rate = libr.load( full_name, sr=fs )
 
     # hop length
-    hop = 128
+    hop = 256
 
     # Compute and plot CQT-----------------------------------------------------
     # - One frequency bin has a length of 1379 (for Cmaj.wav)
     # - 48 bins in total -> 48 times 1379 
     cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
-        fmin=110, n_bins=48, bins_per_octave=12 )
+        fmin=libr.note_to_hz('C2'), n_bins=48, bins_per_octave=12)
    
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
@@ -133,7 +136,7 @@ if __name__ == '__main__':
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
-    n_samples = 128
+    n_samples = 48
     squared_cqt_spectrum  = np.power( np.abs( cqt_spectrum ), 2 )
 
     inv_squared_spectrum = ifft( squared_cqt_spectrum, n_samples, axis=0)
@@ -151,21 +154,39 @@ if __name__ == '__main__':
     u_bar = non_linear_mapping( u_init )
 
     # check shapes
-    # print("inv_observed_spectrum: ", inv_squared_spectrum.shape)
-    # print("inv_harm_struct: ", inv_harm_struct.shape)
-    # print("u: ", u.shape)
-    # print("u_bar: ", u_bar.shape)
+    print("u_bar: ", u_bar.shape)
 
     # plot whole pipeline    
-    # plot_pipeline( squared_cqt_spectrum, inv_harm_struct, 
-    #   initial_freq_distro, u_init, u_bar )
+    #plot_pipeline( squared_cqt_spectrum, inv_harm_struct, initial_freq_distro, u_init, u_bar )
 
     # get the onsets and midi notes of the audiofile
     onsets, m, t = get_onset_mat( file_path + mat_file_name )
 
-    # print("onsets: ", onsets.shape)
-    # print("midi: ", m.shape)
+    # delta t of onsets -> 0.01s
+    dt = np.around(t[1] - t[0], decimals=6)
+
+    # get hop size of onsets
+    hop_onset = fs * dt
+
+
+    print("delta t: ", dt)
+    print("onsets: ", onsets.shape)
+    print("midi: ", m.shape)
+
+    plt.figure()
+    plt.plot(t, m.T)
+    #plt.show()
+
     # plt.figure()
-    # plt.plot(t, onsets.T)
-    # plt.plot(t, m.T)
+    # plt.plot(np.abs(u_bar[:, 100:110]))
+    # plt.title("u bar")
+    # plt.ylabel("Magnitude")
+    # plt.xlabel("frequency")
     # plt.show()
+
+    plt.figure()
+    plt.imshow(np.abs(u_bar), aspect='auto', extent=[0, t[-1], libr.core.note_to_midi('C6'), libr.core.note_to_midi('C2')])
+    plt.title("u bar")
+    plt.ylabel("midi note")
+    plt.xlabel("frames")
+    plt.show()

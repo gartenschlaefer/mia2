@@ -55,7 +55,7 @@ def initial_harmonics( list_harmonics,
 if __name__ == '__main__':
     
     # Loading file in memory 
-    file_name = 'Cmaj.wav'
+    file_name = 'A1.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
      
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # - One frequency bin has a length of 1379 (for Cmaj.wav)
     # - 48 bins in total -> 48 times 1379 
     cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=128, 
-        fmin=110, n_bins=48, bins_per_octave=12 )
+        fmin=50, n_bins=48, bins_per_octave=12 )
    
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
@@ -75,23 +75,22 @@ if __name__ == '__main__':
     common_harmonic_structure = initial_harmonics( list_harmonics, 
         common_harmonic_structure, option=1 )
 
-    # Averaged respectively interpolated common_harmonic spectrum--------------
-    
-
     # Plots so far-------------------------------------------------------------
-    # plot_CQT_spectrum( cqt_spectrum )
-    # plot_harmonic_structure( common_harmonic_structure )
+    plot_CQT_spectrum( cqt_spectrum )
+    plot_harmonic_structure( common_harmonic_structure )
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
     n_samples = 128
-    inv_observed_spectrum = ifft( cqt_spectrum, n_samples )
+    inv_observed_spectrum = ifft( cqt_spectrum , n_samples )
     inv_harm_struct = ifft( common_harmonic_structure, n_samples )
-    
+
     estimate_freq_distro = np.multiply( inv_observed_spectrum, 
         np.conj(inv_harm_struct ))
 
-    estimate_freq_distro = estimate_freq_distro[0 , : ]
+    estimate_freq_distro = np.absolute( estimate_freq_distro[0 , : ] )
+    plt.plot( estimate_freq_distro )
+    plt.show()
 
     # Non-linear mapping function----------------------------------------------
     # non_linear_mapping( )

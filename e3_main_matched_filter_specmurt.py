@@ -13,6 +13,8 @@ from librosa.display import specshow
 
 #------------------------------------------------------------------------------
 def plot_CQT_spectrum( cqt_spectrum ):
+
+    plt.figure(figsize=(8,4))
     specshow( libr.amplitude_to_db( np.abs(cqt_spectrum), ref=np.max),
         sr=sampling_rate, x_axis='time', y_axis='cqt_note')
     
@@ -27,6 +29,7 @@ def plot_harmonic_structure( common_harmonic_structure ):
         basefmt=None, use_line_collection=True)
     plt.xlabel( 'Log-freq. bin number' )
     plt.ylabel( 'Relative amplitude of harmonic component' )
+    plt.grid()
     plt.show()
 
 #------------------------------------------------------------------------------
@@ -49,6 +52,50 @@ def initial_harmonics( list_harmonics,
         print( "No other options available!" )
     
     return common_harmonic_structure  
+
+
+def plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar ):
+  """
+  plot pipeline of the algorithm
+  """
+  s_frame = 0
+  t_frame = 150
+
+  plt.figure()
+  plt.imshow(np.abs(inv_observed_spectrum[:, s_frame:t_frame]))
+  plt.title("inv observed spectrum")
+  plt.ylabel("time (specmurt)")
+  plt.xlabel("frames")
+  #plt.show()
+
+  plt.figure()
+  plt.plot(np.abs(inv_harm_struct))
+  plt.title("inv harm struct")
+  plt.ylabel("time (specmurt)")
+  plt.xlabel("frames")
+  #plt.show()
+
+  plt.figure()
+  plt.imshow(np.abs(estimate_freq_distro[:, s_frame:t_frame]))
+  plt.title("V / H")
+  plt.ylabel("time (specmurt)")
+  plt.xlabel("frames")
+  #plt.show()
+
+  plt.figure()
+  plt.imshow(np.abs(u[:, s_frame:t_frame]))
+  plt.title("u = fft(V / H)")
+  plt.ylabel("frequency")
+  plt.xlabel("frames")
+  #plt.show()
+
+  plt.figure()
+  plt.imshow(np.abs(u_bar[:, s_frame:t_frame]))
+  plt.title("u bar")
+  plt.ylabel("frequency")
+  plt.xlabel("frames")
+  plt.show()
+
 
 #------------------------------------------------------------------------------
 # Main function
@@ -79,19 +126,33 @@ if __name__ == '__main__':
     
 
     # Plots so far-------------------------------------------------------------
-    # plot_CQT_spectrum( cqt_spectrum )
-    # plot_harmonic_structure( common_harmonic_structure )
+    #plot_CQT_spectrum( cqt_spectrum )
+    #plot_harmonic_structure( common_harmonic_structure )
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
-    n_samples = 128
-    inv_observed_spectrum = ifft( cqt_spectrum, n_samples )
-    inv_harm_struct = ifft( common_harmonic_structure, n_samples )
-    
-    estimate_freq_distro = np.multiply( inv_observed_spectrum, 
-        np.conj(inv_harm_struct ))
 
-    estimate_freq_distro = estimate_freq_distro[0 , : ]
+    n_samples = 128
+    inv_observed_spectrum = ifft( cqt_spectrum, n_samples, axis=0)
+    inv_harm_struct = ifft( common_harmonic_structure, n_samples, axis=0)
+
+    # estimate
+    estimate_freq_distro = np.multiply( inv_observed_spectrum, 
+      np.conj(inv_harm_struct ))
+
+    # fundamental frequency distribution
+    u = fft(estimate_freq_distro, axis=0)
+
+    #estimate_freq_distro = estimate_freq_distro[0 , : ]
 
     # Non-linear mapping function----------------------------------------------
-    # non_linear_mapping( )
+    u_bar = non_linear_mapping( u )
+
+    # check shapes
+    print("inv_observed_spectrum: ", inv_observed_spectrum.shape)
+    print("inv_harm_struct: ", inv_harm_struct.shape)
+    print("u: ", u.shape)
+    print("u_bar: ", u_bar.shape)
+  
+    # plot whole pipeline    
+    plot_pipeline( inv_observed_spectrum, inv_harm_struct, estimate_freq_distro, u, u_bar )

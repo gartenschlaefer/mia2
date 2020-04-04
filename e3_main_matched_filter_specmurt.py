@@ -103,7 +103,7 @@ def plot_pipeline( inv_observed_spectrum, inv_harm_struct,
 if __name__ == '__main__':
     
     # Loading file in memory 
-    file_name = '01-AchGottundHerr_4Kanal.wav'
+    file_name = 'C2.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
 
@@ -116,9 +116,11 @@ if __name__ == '__main__':
 
     # Compute and plot CQT-----------------------------------------------------
     # - One frequency bin has a length of 1379 (for Cmaj.wav)
-    # - 48 bins in total -> 48 times 1379 
+    # - 48 bins in total -> 48 times 1379
+
+    start_note = 'C2'
     cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
-        fmin=110, n_bins=48, bins_per_octave=12 )
+        fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
    
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
@@ -127,40 +129,34 @@ if __name__ == '__main__':
     common_harmonic_structure = initial_harmonics( list_harmonics, 
         common_harmonic_structure, option=1 )
 
-    # Plots so far-------------------------------------------------------------
-    # plot_CQT_spectrum( cqt_spectrum, sampling_rate, hop )
-    # plot_harmonic_structure( common_harmonic_structure )
+    freq_bins = libr.cqt_frequencies( 48, fmin=libr.note_to_hz( start_note ))
     
     # Initial guess for fundamental frequency distribution---------------------
     # - Done via inverse filter approach.
     n_samples = 128
     squared_cqt_spectrum  = np.power( np.abs( cqt_spectrum ), 2 )
-
     inv_squared_spectrum = ifft( squared_cqt_spectrum, n_samples, axis=0)
     inv_harm_struct = ifft( common_harmonic_structure, n_samples, axis=0)
 
-    # estimate first estimate
+    # initial freq. distro
     initial_freq_distro = np.multiply( inv_squared_spectrum, 
-      np.conj(inv_harm_struct ))
-
-    # fundamental frequency distribution
+        np.conj(inv_harm_struct ))
     u_init = fft( initial_freq_distro, axis=0 )
-    print( u_init.shape )
+    u_bar_init = non_linear_mapping( u_init )
 
-    # Non-linear mapping function----------------------------------------------
-    u_bar = non_linear_mapping( u_init )
-
-    # check shapes
+    # check shapes-------------------------------------------------------------
     # print("inv_observed_spectrum: ", inv_squared_spectrum.shape)
     # print("inv_harm_struct: ", inv_harm_struct.shape)
     # print("u: ", u.shape)
     # print("u_bar: ", u_bar.shape)
 
-    # plot whole pipeline    
-    # plot_pipeline( squared_cqt_spectrum, inv_harm_struct, 
-    #   initial_freq_distro, u_init, u_bar )
+    # Plots--------------------------------------------------------------------
+    plot_CQT_spectrum( cqt_spectrum, sampling_rate, hop )
+    plot_harmonic_structure( common_harmonic_structure ) 
+    plot_pipeline( squared_cqt_spectrum, inv_harm_struct, 
+       initial_freq_distro, u_init, u_bar_init )
 
-    # get the onsets and midi notes of the audiofile
+    # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )
 
     # print("onsets: ", onsets.shape)

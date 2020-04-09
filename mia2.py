@@ -65,13 +65,6 @@ def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
 
   return u_bar
 
-
-def common_harmonic_structure_estimation():
-  """
-  
-  """
-  print('CHS')
-
 # Lecture 2:-------------------------------------------------------------------
 def matrix_otsu_thresh(R, lower_bound=0.5):
   """

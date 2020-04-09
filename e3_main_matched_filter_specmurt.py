@@ -13,10 +13,10 @@ import librosa as libr
 from librosa.display import specshow
 
 #------------------------------------------------------------------------------
-def plot_CQT_spectrum( cqt_spectrum, sr, hop ):
+def plot_cqt( cqt, sr, hop ):
 
     plt.figure(figsize=(8,4))
-    specshow( libr.amplitude_to_db( np.abs(cqt_spectrum), ref=np.max),
+    specshow( libr.amplitude_to_db( np.abs(cqt), ref=np.max),
         sr=sr, x_axis='time', y_axis='cqt_note', hop_length=hop)
     
     plt.colorbar( format='%+2.0f dB' )
@@ -25,8 +25,8 @@ def plot_CQT_spectrum( cqt_spectrum, sr, hop ):
     plt.show()  
 
 #------------------------------------------------------------------------------
-def plot_harmonic_structure( common_harmonic_structure ):
-    plt.stem( common_harmonic_structure, linefmt=None, markerfmt=None, 
+def plot_harmonic_structure( chs ):
+    plt.stem( chs, linefmt=None, markerfmt=None, 
         basefmt=None, use_line_collection=True)
     plt.xlabel( 'Log-freq. bin number' )
     plt.ylabel( 'Relative amplitude of harmonic component' )
@@ -34,28 +34,40 @@ def plot_harmonic_structure( common_harmonic_structure ):
     plt.show()
 
 #------------------------------------------------------------------------------
-def initial_harmonics( list_harmonics, 
-    common_harmonic_structure, option=0 ):
+def initial_harmonics( list_chs, 
+    chs, option=0 ):
     
     if option == 0:
-        common_harmonic_structure[ list_harmonics ] = 1
+        chs[ list_chs ] = 1
     
     elif (option == 1) or (option == 2):
-        for index, elem in enumerate( list_harmonics, 1 ):
+        for index, elem in enumerate( list_chs, 1 ):
             
             if option == 1:
-                common_harmonic_structure[ elem ] = 1 / np.sqrt( index )
+                chs[ elem ] = 1 / np.sqrt( index )
 
             if option == 2:
-                common_harmonic_structure[ elem ] = 1 / index
+                chs[ elem ] = 1 / index
 
     else:
         print( "No other options available!" )
     
-    return common_harmonic_structure  
+    return chs  
 
 #------------------------------------------------------------------------------
-def plot_pipeline( inv_observed_spectrum, inv_harm_struct, 
+def inverse_filter( cqt, chs, fft_bins ):
+    
+    v = np.power( np.abs( cqt ), 2 )
+    
+    inv_v  = ifft( v, fft_bins, axis=0 )
+    inv_chs = np.conj( ifft( chs, fft_bins, axis=0 ))
+    
+    u = fft( np.multiply( inv_v, inv_chs ), axis=0 )
+
+    return u , v 
+
+#------------------------------------------------------------------------------
+def plot_pipeline( inv_observed_spectrum, inv_chs, 
     estimate_freq_distro, u, u_bar ):
   """
   plot pipeline of the algorithm
@@ -71,7 +83,7 @@ def plot_pipeline( inv_observed_spectrum, inv_harm_struct,
   #plt.show()
 
   plt.figure()
-  plt.plot(np.abs(inv_harm_struct))
+  plt.plot(np.abs(inv_chs))
   plt.title("inv harm struct")
   plt.ylabel("time (specmurt)")
   plt.xlabel("frames")
@@ -102,62 +114,71 @@ def plot_pipeline( inv_observed_spectrum, inv_harm_struct,
 # Main function
 if __name__ == '__main__':
     
-    # Loading file in memory 
-    file_name = 'C2.wav'
-    file_path = 'ignore/sounds/'
-    full_name = file_path + file_name
-
-    # sampling rate
-    fs = 44100
-
     # file name to mat file with onsets and midi notes
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
-    audio_data, sampling_rate = libr.load( full_name, sr=fs )
 
-    # hop length
+    # Loading file in memory 
+    file_name = '01-AchGottundHerr_4Kanal.wav'
+    file_path = 'ignore/sounds/'
+    full_name = file_path + file_name
+    audio_data, sampling_rate = libr.load( full_name, sr=None, duration=3 )
+
     hop = 256
-
-    # Compute and plot CQT-----------------------------------------------------
-    # - One frequency bin has a length of 1379 (for Cmaj.wav)
-    # - 48 bins in total -> 48 times 1379
-
     start_note = 'C2'
-    cqt_spectrum = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
-        fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
-   
+    cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop,  
+          fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
+ 
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
-    list_harmonics = [0, 12, 19, 24, 28, 31]
-    common_harmonic_structure = np.zeros(( 48, 1 ))
-    common_harmonic_structure = initial_harmonics( list_harmonics, 
-        common_harmonic_structure, option=1 )
+    cqt_bins = 48
+    list_chs = [0, 12, 19, 24, 28, 31, 47]
 
-    freq_bins = libr.cqt_frequencies( 48, fmin=libr.note_to_hz( start_note ))
+    chs = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=2 )
     
-    # Initial guess for fundamental frequency distribution---------------------
-    # - Done via inverse filter approach.
-    n_samples = 48
-    squared_cqt_spectrum  = np.power( np.abs( cqt_spectrum ), 2 )
-    inv_squared_spectrum = ifft( squared_cqt_spectrum, n_samples, axis=0)
-    inv_harm_struct = ifft( common_harmonic_structure, n_samples, axis=0)
+    u , v = inverse_filter( cqt, chs, cqt_bins )
+    u_bar = non_linear_mapping( u )
 
-    # initial freq. distro
-    initial_freq_distro = np.multiply( inv_squared_spectrum, 
-        np.conj(inv_harm_struct ))
-    u_init = fft( initial_freq_distro, axis=0 )
-    u_bar_init = non_linear_mapping( u_init )
+    # iterative algorithm------------------------------------------------------
+    ( num_rows, num_cols ) = cqt.shape 
+    len_harm = len( list_chs ) - 1
+    
+    # Pre-allocation
+    theta_vector = np.zeros( ( len_harm, 1 ), dtype=complex )
+    b_vector     = np.zeros( ( len_harm, 1 ), dtype=complex )
+    h_bar_vector = np.zeros( ( num_rows, 1 ), dtype=complex )
+    u_bar_matrix = np.zeros( ( num_rows, len_harm ), dtype=complex )
+    A_matrix     = np.zeros( ( len_harm, len_harm ), dtype=complex )
 
-    # check shapes-------------------------------------------------------------
-    # print("inv_observed_spectrum: ", inv_squared_spectrum.shape)
-    # print("inv_harm_struct: ", inv_harm_struct.shape)
-    # print("u: ", u.shape)
-    # print("u_bar: ", u_bar.shape)
+    # initialise U_bar matrix
+    for t in range( num_cols ):
+        for out_index, elem in enumerate( list_chs[ 1 : ] ):
+            for in_index in range( num_rows ):
+
+                shift = in_index - elem
+                if shift < 0: 
+                    continue
+                elif shift >= 0:
+                    u_bar_matrix[ in_index, out_index ] = u_bar[ shift , t]
+   
+        A_matrix = np.matmul( u_bar_matrix.T, u_bar_matrix  )
+        b_vector = np.matmul(( v[: , t] - u_bar[ : , t] ).T, 
+                   u_bar_matrix)
+
+        theta_vector = np.matmul( np.linalg.inv(A_matrix), b_vector )
+
+        list_chs = list_chs[ 1 : ]
+        for index, elem in  enumerate( list_chs ):
+            chs[ elem ] = np.abs( theta_vector[ index ] )
+
+        u , v = inverse_filter( cqt, chs, cqt_bins )
+        u_bar = non_linear_mapping( u )
+
+    plot_harmonic_structure( chs ) 
 
     # Plots--------------------------------------------------------------------
-    plot_CQT_spectrum( cqt_spectrum, sampling_rate, hop )
-    plot_harmonic_structure( common_harmonic_structure ) 
-    plot_pipeline( squared_cqt_spectrum, inv_harm_struct, 
-       initial_freq_distro, u_init, u_bar_init )
+    plot_cqt( cqt, sampling_rate, hop )
+    # plot_harmonic_structure( chs ) 
+    # plot_pipeline( v, inv_v, u, u_init, u_bar_init )
 
     # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )
@@ -166,15 +187,14 @@ if __name__ == '__main__':
     dt = np.around(t[1] - t[0], decimals=6)
 
     # get hop size of onsets
-    hop_onset = fs * dt
+    hop_onset = sampling_rate * dt
 
+    # print("delta t: ", dt)
+    # print("onsets: ", onsets.shape)
+    # print("midi: ", m.shape)
 
-    print("delta t: ", dt)
-    print("onsets: ", onsets.shape)
-    print("midi: ", m.shape)
-
-    plt.figure()
-    plt.plot(t, m.T)
+    # plt.figure()
+    # plt.plot(t, m.T)
     #plt.show()
 
     # plt.figure()
@@ -184,9 +204,11 @@ if __name__ == '__main__':
     # plt.xlabel("frequency")
     # plt.show()
 
-    plt.figure()
-    plt.imshow(np.abs(u_bar), aspect='auto', extent=[0, t[-1], libr.core.note_to_midi('C6'), libr.core.note_to_midi('C2')])
-    plt.title("u bar")
-    plt.ylabel("midi note")
-    plt.xlabel("frames")
-    plt.show()
+    # plt.figure()
+    # plt.imshow(np.abs(u_bar_init), aspect='auto', extent=[0, t[-1], 
+    #     libr.core.note_to_midi('C6'), libr.core.note_to_midi('C2')])
+    # 
+    # plt.title("u bar")
+    # plt.ylabel("midi note")
+    # plt.xlabel("frames")
+    # plt.show()

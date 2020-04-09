@@ -121,19 +121,32 @@ if __name__ == '__main__':
     file_name = '01-AchGottundHerr_4Kanal.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
+<<<<<<< HEAD
     audio_data, sampling_rate = libr.load( full_name, sr=None, duration=3 )
 
     hop = 256
     start_note = 'C2'
     cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop,  
+=======
+    audio_data, sampling_rate = libr.load( full_name, sr=None )
+
+    hop = 256
+    start_note = 'C2'
+    cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
+>>>>>>> 0bb1ff51b356b8a70f2f20d6b2f532c48487fa37
           fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
  
     # Define common harmonic structure-----------------------------------------
     # - number of frequency bins is the same as for the cqt -> n_bins = 48
     cqt_bins = 48
+<<<<<<< HEAD
     list_chs = [0, 12, 19, 24, 28, 31, 47]
 
     chs = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=2 )
+=======
+    list_chs = [0, 12, 19, 24, 28, 31]
+    chs = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
+>>>>>>> 0bb1ff51b356b8a70f2f20d6b2f532c48487fa37
     
     u , v = inverse_filter( cqt, chs, cqt_bins )
     u_bar = non_linear_mapping( u )
@@ -158,7 +171,11 @@ if __name__ == '__main__':
                 if shift < 0: 
                     continue
                 elif shift >= 0:
+<<<<<<< HEAD
                     u_bar_matrix[ in_index, out_index ] = u_bar[ shift , t]
+=======
+                    u_bar_matrix[ in_index, out_index ] = u_bar[ shift , 0]
+>>>>>>> 0bb1ff51b356b8a70f2f20d6b2f532c48487fa37
    
         A_matrix = np.matmul( u_bar_matrix.T, u_bar_matrix  )
         b_vector = np.matmul(( v[: , t] - u_bar[ : , t] ).T, 
@@ -176,9 +193,16 @@ if __name__ == '__main__':
     plot_harmonic_structure( chs ) 
 
     # Plots--------------------------------------------------------------------
+<<<<<<< HEAD
     plot_cqt( cqt, sampling_rate, hop )
     # plot_harmonic_structure( chs ) 
     # plot_pipeline( v, inv_v, u, u_init, u_bar_init )
+=======
+    # plot_cqt( cqt, sampling_rate, hop )
+    # plot_harmonic_structure( chs ) 
+    # plot_pipeline( squared_cqt, inv_chs, 
+    #    u, u_init, u_bar_init )
+>>>>>>> 0bb1ff51b356b8a70f2f20d6b2f532c48487fa37
 
     # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )

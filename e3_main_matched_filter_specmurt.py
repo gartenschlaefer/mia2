@@ -135,31 +135,26 @@ if __name__ == '__main__':
 
     chs = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
     u , v = inverse_filter( cqt, chs, cqt_bins )
-    u_bar = non_linear_mapping( u ).T
+    u_bar = non_linear_mapping( u )
 
     # iterative algorithm------------------------------------------------------
     ( num_rows, num_cols ) = cqt.shape 
     len_harm = len( list_chs ) - 1
     
-    u_bar_matrix = np.zeros(( len_harm ,num_rows ), dtype=complex)
-    trans_matrix = np.ones((len_harm, num_cols), dtype=complex)
+    b_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
+    t_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
+    u_bar_matrix = np.zeros(( len_harm, num_rows ), dtype=complex)
 
-    # initialise U_bar matrix
-    for out_index, elem in enumerate( list_chs[ 1 : ] ):
-        for in_index in range( num_rows ):
-            shift = in_index - elem
-            if shift < 0: 
-                continue
-            elif shift >= 0:
-                u_bar_matrix[ out_index , in_index ] = np.matmul( 
-                trans_matrix[ out_index, shift: ], u_bar[ shift: , in_index ] )
-   
+    for i in range( num_cols ):
+        for j, elem in enumerate( list_chs[ 1: ] ):
+            len_u = len(  u_bar[  :  , 0 ] )
+            u_bar_matrix[ j, elem: ] = u_bar[  0:len_u-elem  , j ]     
+
         A_matrix = np.matmul( u_bar_matrix, u_bar_matrix.T  )
-        b_vector = np.matmul( u_bar_matrix, (v - u_bar.T))
-        theta_vector = np.matmul( np.linalg.inv(A_matrix), b_vector )
+        b_matrix[: , i] = np.matmul( u_bar_matrix, (v[:, i] - u_bar[:, i] ))
+        t_matrix[: , i] = np.matmul(np.linalg.inv( A_matrix ), b_matrix[: , j])
 
-    print(np.linalg.inv(A_matrix))
-
+    print( b_matrix )
         # list_chs = list_chs[ 1 : ]
         # for index, elem in  enumerate( list_chs ):
         #     chs[ elem ] = np.abs( theta_vector[ index ] )

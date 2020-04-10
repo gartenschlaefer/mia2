@@ -118,7 +118,7 @@ if __name__ == '__main__':
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
 
     # Loading file in memory---------------------------------------------------
-    file_name = 'Cmaj.wav'
+    file_name = 'C2.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
     audio_data, sampling_rate = libr.load( full_name, sr=None )
@@ -137,10 +137,12 @@ if __name__ == '__main__':
     chs   = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
     u, v  = inverse_filter( cqt, chs, cqt_bins )
     u_bar = non_linear_mapping( u )
+    len_u = len( u_bar[ : , 0 ] )
 
     # iterative algorithm------------------------------------------------------
     ( num_rows, num_cols ) = cqt.shape 
     len_harm = len( list_chs ) - 1
+    
     
     b_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
     t_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
@@ -148,7 +150,6 @@ if __name__ == '__main__':
 
     for i in range( num_cols ):
         for j, elem_j in enumerate( list_chs[ 1: ] ):
-            len_u = len( u_bar[ : , 0 ] )
             u_bar_matrix[ j, elem_j : ] = u_bar[ 0 : len_u - elem_j , j ]     
 
         A_matrix = u_bar_matrix @ u_bar_matrix.T 
@@ -158,7 +159,7 @@ if __name__ == '__main__':
         t_matrix[ : , i ] = inv_A_matrix @ b_matrix[ : , j ] 
 
         for k in list_chs[ 1: ]:
-            chs[ k ] = np.abs( np.amax(  t_matrix[ : , i ]  ))
+            chs[ k ] = np.abs( np.amax(  t_matrix[ : , i ] ))
         
         u , v = inverse_filter( cqt, chs, cqt_bins )
         u_bar = non_linear_mapping( u )
@@ -167,6 +168,12 @@ if __name__ == '__main__':
     # plot_cqt( cqt, sampling_rate, hop )
     # plot_harmonic_structure( chs ) 
     # plot_pipeline( v, inv_chs, u, u, u_bar )
+    # plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
+    #             bins_per_octave=12 ), np.abs( u_bar[ : , 300] ))
+    # plt.xlabel( 'Frequency log-scale' )
+    # plt.ylabel( 'Fundamental frequency distribution' )
+    # plt.show()
+    
 
     # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )

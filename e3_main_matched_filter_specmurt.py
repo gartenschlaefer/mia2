@@ -114,27 +114,28 @@ def plot_pipeline( inv_observed_spectrum, inv_chs,
 # Main function
 if __name__ == '__main__':
     
-    # file name to mat file with onsets and midi notes
+    # file name to mat file with onsets and midi notes-------------------------
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
 
-    # Loading file in memory 
-    file_name = 'C2.wav'
+    # Loading file in memory---------------------------------------------------
+    file_name = 'Cmaj.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
     audio_data, sampling_rate = libr.load( full_name, sr=None )
 
+    # CQT Params---------------------------------------------------------------
     hop = 256
     start_note = 'C2'
     cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop,  
           fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
  
     # Define common harmonic structure-----------------------------------------
-    # - number of frequency bins is the same as for the cqt -> n_bins = 48
     cqt_bins = 48
     list_chs = [0, 12, 19, 24, 28, 31 ]
 
-    chs = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
-    u , v = inverse_filter( cqt, chs, cqt_bins )
+    # First initialisation of fundamental frequency distribution---------------
+    chs   = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
+    u, v  = inverse_filter( cqt, chs, cqt_bins )
     u_bar = non_linear_mapping( u )
 
     # iterative algorithm------------------------------------------------------
@@ -146,27 +147,26 @@ if __name__ == '__main__':
     u_bar_matrix = np.zeros(( len_harm, num_rows ), dtype=complex)
 
     for i in range( num_cols ):
-        for j, elem in enumerate( list_chs[ 1: ] ):
-            len_u = len(  u_bar[  :  , 0 ] )
-            u_bar_matrix[ j, elem: ] = u_bar[  0:len_u-elem  , j ]     
+        for j, elem_j in enumerate( list_chs[ 1: ] ):
+            len_u = len( u_bar[ : , 0 ] )
+            u_bar_matrix[ j, elem_j : ] = u_bar[ 0 : len_u - elem_j , j ]     
 
-        A_matrix = np.matmul( u_bar_matrix, u_bar_matrix.T  )
-        b_matrix[: , i] = np.matmul( u_bar_matrix, (v[:, i] - u_bar[:, i] ))
-        t_matrix[: , i] = np.matmul(np.linalg.inv( A_matrix ), b_matrix[: , j])
+        A_matrix = u_bar_matrix @ u_bar_matrix.T 
+        inv_A_matrix = np.linalg.inv( A_matrix )
+        
+        b_matrix[ : , i ] = u_bar_matrix @ ( v[ : , i ] - u_bar[ : , i ] )
+        t_matrix[ : , i ] = inv_A_matrix @ b_matrix[ : , j ] 
 
-    print( b_matrix )
-        # list_chs = list_chs[ 1 : ]
-        # for index, elem in  enumerate( list_chs ):
-        #     chs[ elem ] = np.abs( theta_vector[ index ] )
-
-        # u , v = inverse_filter( cqt, chs, cqt_bins )
-        # u_bar = non_linear_mapping( u )
+        for k in list_chs[ 1: ]:
+            chs[ k ] = np.abs( np.amax(  t_matrix[ : , i ]  ))
+        
+        u , v = inverse_filter( cqt, chs, cqt_bins )
+        u_bar = non_linear_mapping( u )
 
     # Plots--------------------------------------------------------------------
     # plot_cqt( cqt, sampling_rate, hop )
     # plot_harmonic_structure( chs ) 
-    # plot_pipeline( squared_cqt, inv_chs, 
-    #    u, u_init, u_bar_init )
+    # plot_pipeline( v, inv_chs, u, u, u_bar )
 
     # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )

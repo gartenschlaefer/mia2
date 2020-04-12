@@ -118,7 +118,7 @@ if __name__ == '__main__':
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
 
     # Loading file in memory---------------------------------------------------
-    file_name = 'C2.wav'
+    file_name = 'Cmaj.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
     audio_data, sampling_rate = libr.load( full_name, sr=None )
@@ -131,7 +131,7 @@ if __name__ == '__main__':
  
     # Define common harmonic structure-----------------------------------------
     cqt_bins = 48
-    list_chs = [0, 12, 19, 24, 28, 31 ]
+    list_chs = [ 0, 12, 19, 24, 28, 31 ]
 
     # First initialisation of fundamental frequency distribution---------------
     chs   = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
@@ -142,7 +142,6 @@ if __name__ == '__main__':
     # iterative algorithm------------------------------------------------------
     ( num_rows, num_cols ) = cqt.shape 
     len_harm = len( list_chs ) - 1
-    
     
     b_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
     t_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
@@ -168,12 +167,11 @@ if __name__ == '__main__':
     # plot_cqt( cqt, sampling_rate, hop )
     # plot_harmonic_structure( chs ) 
     # plot_pipeline( v, inv_chs, u, u, u_bar )
-    # plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
-    #             bins_per_octave=12 ), np.abs( u_bar[ : , 300] ))
+    plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
+                bins_per_octave=12 ), np.abs( u_bar[ : , 300] ))
     # plt.xlabel( 'Frequency log-scale' )
     # plt.ylabel( 'Fundamental frequency distribution' )
-    # plt.show()
-    
+    plt.show()
 
     # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )

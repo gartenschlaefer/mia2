@@ -246,3 +246,64 @@ def calc_pca(x):
   return np.dot(x, eig_vec), eig_val
 
 
+# some basics-------------------------------------------------------------------
+def custom_stft(x, N=1024, hop=512, norm=True):
+  """
+  short time fourier transform
+  """
+  # windowing
+  w = np.hanning(N)
+
+  # apply windows
+  x_buff = np.multiply(w, buffer(x, N, N-hop))
+
+  # transformation matrix
+  H = np.exp(1j * 2 * np.pi / N * np.outer(np.arange(N), np.arange(N)))
+
+  # normalize if asked
+  if norm:
+    return 2 / N * np.dot(x_buff, H)
+
+  # transformed signal
+  return np.dot(x_buff, H)
+
+
+def buffer(x, n, ol=0):
+  """
+  buffer function like in matlab
+  """
+
+  # number of samples in window
+  n = int(n)
+
+  # overlap
+  ol = int(ol)
+
+  # hopsize
+  hop = n - ol
+
+  # number of windows
+  win_num = (len(x) - n) // hop + 1 
+
+  # remaining samples
+  r = int(np.remainder(len(x), hop))
+  if r:
+    win_num += 1;
+
+  # segments
+  windows = np.zeros((win_num, n))
+
+  # segmentation
+  for wi in range(0, win_num):
+
+    # remainder
+    if wi == win_num - 1 and r:
+      windows[wi] = np.concatenate((x[wi * hop :], np.zeros(n - len(x[wi * hop :]))))
+
+    # no remainder
+    else:
+      windows[wi] = x[wi * hop : (wi * hop) + n]
+
+  return windows
+
+

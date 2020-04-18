@@ -3,6 +3,28 @@
 
 import numpy as np
 
+
+# Lecture 4:-------------------------------------------------------------------
+
+def calc_nmf(X, r=7, algorithm='gradient-descend'):
+  """
+  perform a non-negative matrix factorization with selected algorithms
+  X: [m x n], r: num of factorized components
+  """
+
+  # get shape of X: [m samples x n featuress]
+  m, n = X.shape
+
+  # left-hand-side matrix
+  W = np.random.rand(m, r)
+
+  # right-hand-side matrix 
+  H = np.random.rand(r, n)
+
+
+  return W, H
+
+
 # Lecture 3:-------------------------------------------------------------------
 
 def get_onset_mat(file_name, var_name='GTF0s'):

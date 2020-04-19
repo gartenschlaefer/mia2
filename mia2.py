@@ -27,6 +27,13 @@ def calc_nmf(X, r=7, algorithm='gradient-descend'):
 
 # Lecture 3:-------------------------------------------------------------------
 
+def kl_div(x, y):
+  """
+  Kullback - Leibler Divergence as distance measure
+  """
+  return np.sum(x * np.log(x / y) - x + y)
+
+
 def get_onset_mat(file_name, var_name='GTF0s'):
   """
   reads a .mat file with midi notes and gives back

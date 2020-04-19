@@ -118,7 +118,7 @@ if __name__ == '__main__':
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
 
     # Loading file in memory---------------------------------------------------
-    file_name = 'Cmaj.wav'
+    file_name = 'Cmaj7_9.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
     audio_data, sampling_rate = libr.load( full_name, sr=None )
@@ -161,6 +161,19 @@ if __name__ == '__main__':
             chs[ k ] = np.abs( np.amax(  t_matrix[ : , i ] ))
         
         u , v = inverse_filter( cqt, chs, cqt_bins )
+
+        print( 'Number of iterations: {}'.format( i ) )
+        tolerance = 0.1
+        if i == 0:
+            u_pre_iter = u;
+        else:
+            update_amount = np.linalg.norm( ( u - u_pre_iter ) )
+            if update_amount <= tolerance:
+                break
+            else:
+                continue
+            u_pre_iter = u
+            
         u_bar = non_linear_mapping( u )
 
     # Plots--------------------------------------------------------------------

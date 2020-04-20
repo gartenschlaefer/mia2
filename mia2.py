@@ -6,23 +6,43 @@ import numpy as np
 
 # Lecture 4:-------------------------------------------------------------------
 
-def calc_nmf(X, r=7, algorithm='gradient-descend'):
+def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms
-  X: [m x n], r: num of factorized components
+  V: [m x n] = [features x samples] r: num of factorized components
+  algortithm:
+    - 'lee': Lee and Seung (1999)
   """
 
-  # get shape of X: [m samples x n featuress]
-  m, n = X.shape
+  # shape of V: [m features (DFT) x n samples (frames)]
+  m, n = V.shape
+  
+  # right-hand-side matrix 
+  H = np.random.rand(r, n)
 
   # left-hand-side matrix
   W = np.random.rand(m, r)
 
-  # right-hand-side matrix 
-  H = np.random.rand(r, n)
+  # ones matrix
+  Ones = np.ones((m, n))
 
+  # iterative update
+  for i in range(1, max_iter + 1):
 
-  return W, H
+    # update right-hand side matrix
+    H = H * ( (W.T @ (V / (W @ H))) / (W.T @ Ones) )
+
+    # update left-hand side matrix
+    W = W * ( ((V / (W @ H) @ H.T )) / (Ones @ H.T) )
+
+    # distance measure
+    d = kl_div(V, W @ H)
+
+    # print distance mearure each 
+    if not i % n_print_dist or i == max_iter:
+      print("iteration: [{}], distance: [{}]".format(i, d))
+
+  return W, H, d
 
 
 # Lecture 3:-------------------------------------------------------------------
@@ -31,7 +51,7 @@ def kl_div(x, y):
   """
   Kullback - Leibler Divergence as distance measure
   """
-  return np.sum(x * np.log(x / y) - x + y)
+  return np.linalg.norm(x * np.log(x / y) - x + y)
 
 
 def get_onset_mat(file_name, var_name='GTF0s'):

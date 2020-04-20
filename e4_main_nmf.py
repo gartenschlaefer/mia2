@@ -65,13 +65,42 @@ def plot_spec_pca(X, X_pca, plot_path, name='no_name'):
 	plt.savefig(plot_path + name + '_spec_pca.png', dpi=150)
 	#plt.show()
 
+
+def plot_nmf_wh(W, H, d, r, max_iter, plot_path, name='no_name'):
+	"""
+	plot NMF matrices W and H
+	"""
+
+	# W
+	plt.figure()
+	plt.imshow(W, cmap='cividis', aspect='auto')
+	plt.ylabel("DFT")
+	plt.xlabel("Columns of W")
+
+	ax = plt.gca()
+	ax.set_xticks(np.arange(0, r, 1))
+	ax.set_xticklabels(np.arange(0, r, 1))
+	plt.savefig("{}{}_nmf-W_d-{:.4f}_r-{}_it-{}".format(plot_path, name, d, r, max_iter).replace(".", "p") + '.png', dpi=150)
+
+	# H
+	plt.figure(figsize=(8, 4))
+	plt.imshow(H, cmap='magma', aspect='auto')
+	plt.ylabel("Rows of H")
+	plt.xlabel("frames")
+
+	ax = plt.gca()
+	ax.set_yticks(np.arange(0, r, 1))
+	ax.set_yticklabels(np.arange(0, r, 1))
+	plt.savefig("{}{}_nmf-H_d-{:.4f}_r-{}_it-{}".format(plot_path, name, d, r, max_iter).replace(".", "p") + '.png', dpi=150)
+
+
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
     
 	# file params 
 	file_names = ['DL6.wav', 'happy_plug.wav']
-	file_name = file_names[0]
+	file_name = file_names[1]
 
 	# some paths
 	file_path = 'ignore/ass4_data/'
@@ -84,7 +113,10 @@ if __name__ == '__main__':
 	# params
 
 	# amount components
-	r = 7
+	r = 4
+
+	# number of max iterations
+	max_iter = 1000
 
 	# DFT size
 	#N = 1024
@@ -112,8 +144,8 @@ if __name__ == '__main__':
 	print("PCA: ", X_pca.shape)
 
 
-	# NMF
-	W, H = calc_nmf(X, r=r)
+	# NMF with lee seung algorithm
+	W, H, d = calc_nmf(X.T, r=r, algorithm='lee', max_iter=max_iter)
 
 	print("W: ", W.shape)
 	print("H: ", H.shape)
@@ -122,11 +154,14 @@ if __name__ == '__main__':
 	# --
 	# some plots
 	
+	# nmf	
+	plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0])
+	
 	# spec	
-	plot_spec_pca(X, X_pca[:, :r], plot_path, name=file_name.split(".")[0])
+	#plot_spec_pca(X, X_pca[:, :r], plot_path, name=file_name.split(".")[0])
 	
 	# plot of signal
-	plot_signal(x, t, plot_path, name=file_name.split(".")[0])
+	#plot_signal(x, t, plot_path, name=file_name.split(".")[0])
 
-	#plt.show()
+	plt.show()
 

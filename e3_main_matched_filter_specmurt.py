@@ -118,7 +118,7 @@ if __name__ == '__main__':
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
 
     # Loading file in memory---------------------------------------------------
-    file_name = 'Cmaj7_9.wav'
+    file_name = 'C2_A3.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
     audio_data, sampling_rate = libr.load( full_name, sr=None )
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     # plot_harmonic_structure( chs ) 
     # plot_pipeline( v, inv_chs, u, u, u_bar )
     plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
-                bins_per_octave=12 ), np.abs( u_bar[ : , 300] ))
+                bins_per_octave=12 ), np.abs( u_bar [ : , 0 ]))
     # plt.xlabel( 'Frequency log-scale' )
     # plt.ylabel( 'Fundamental frequency distribution' )
     plt.show()

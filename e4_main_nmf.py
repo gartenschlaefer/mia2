@@ -144,7 +144,7 @@ if __name__ == '__main__':
 	print("PCA: ", X_pca.shape)
 
 	# NMF with lee seung algorithm
-	W, H, d = calc_nmf(X.T, r=r, algorithm='smaragdis', max_iter=max_iter)
+	W, H, d = calc_nmf(X.T, R=r, T=10, algorithm='smaragdis', max_iter=max_iter)
 
 	print("W: ", W.shape)
 	print("H: ", H.shape)

@@ -3,12 +3,21 @@
 
 import numpy as np
 
+def compute_lambda( W, H, T, M, N ):
+  
+  # First init. of Lambda matrix
+  Lambda = np.zeros( (M, N) )
+
+  for t in range( T ):
+    Lambda += W[ :, :, t ] @ time_shift( H, t, axis=1 )
+
+  return Lambda
 
 # Lecture 4:-------------------------------------------------------------------
 def time_shift( matrix, shift, axis=1 ):
   shift_matrix = np.roll( matrix, shift, axis )
 
-  assert type( shift) is int, "Shift value is not an integer: %r" % shift
+  assert type( shift ) is int, "Shift value is not an integer: %r" % shift
 
   if shift >= 0: 
     shift_matrix[ : , :shift ] = 0
@@ -18,7 +27,7 @@ def time_shift( matrix, shift, axis=1 ):
 
   return shift_matrix
 
-def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
+def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms
   V: [m x n] = [features x samples] r: num of factorized components
@@ -27,16 +36,23 @@ def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
   """
 
   # shape of V: [m features (DFT) x n samples (frames)]
-  m, n = V.shape
+  M, N = V.shape
   
   # right-hand-side matrix 
-  H = np.random.rand(r, n)
+  H = np.random.rand( R, N )
 
-  # left-hand-side matrix
-  W = np.random.rand(m, r)
+  # left-hand-side matrix, depending on the algorithm
+  if algorithm == 'lee':
+    W = np.random.rand( M, R )
+  
+  if algorithm == 'smaragdis':
+    W = np.random.rand( M, R, T)
+
+  # lambda matrix for nmf-deconvolution
+  Lambda = compute_lambda( W, H, T, M, N )
 
   # ones matrix
-  Ones = np.ones((m, n))
+  Ones = np.ones( (M, N) )
 
   # iterative update
   for i in range(1, max_iter + 1):
@@ -49,11 +65,29 @@ def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
       # update left-hand side matrix
       W = W * ( ((V / (W @ H) @ H.T )) / (Ones @ H.T) )
 
-    if algorithm == 'smaragdis':
-      print( 'test' )
+      # distance measure
+      d = kl_div(V, W @ H)
 
-    # distance measure
-    d = kl_div(V, W @ H)
+    if algorithm == 'smaragdis':
+      
+      for t in range( T ):
+        # W_t has the dimension MxR
+        W_t = W[ : , : , t ]
+
+        # update right-hand side matrix
+        H = H * ( ( W_t.T @ time_shift( V / Lambda, -1*t ) )
+                / ( W_t.T @ Ones) )
+
+        W_t = W * ((( V / (Lambda) @ time_shift( H.T, t ))) / 
+                  ( Ones @ time_shift( H.T, t )))
+
+        W[ : , : , t ] = W_t
+
+      # Update Lambda matrix for the next iteration
+      Lambda = compute_lambda( W, H, T, M, N  )
+
+      # distance measure
+      d = kl_div(V, Lambda )
 
     # print distance mearure each 
     if not i % n_print_dist or i == max_iter:

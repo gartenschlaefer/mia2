@@ -5,6 +5,19 @@ import numpy as np
 
 
 # Lecture 4:-------------------------------------------------------------------
+def time_shift( matrix, shift, axis=1 ):
+  shift_matrix = np.roll( matrix, shift, axis )
+
+  assert type( shift) is int, "Shift value is not an integer: %r" % shift
+
+  if shift >= 0: 
+    shift_matrix[ : , :shift ] = 0
+
+  elif shift < 0: 
+    shift_matrix[ : , shift: ] = 0
+
+  return shift_matrix
+
 def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms

@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft, ifft
 
 # mia2 lib
-from mia2 import custom_stft
-from mia2 import calc_pca
-from mia2 import calc_nmf
+from mia2 import custom_stft, calc_pca, calc_nmf, time_shift
 
 import librosa as libr
 
@@ -104,7 +102,7 @@ if __name__ == '__main__':
     
 	# file params 
 	file_names = ['DL6.wav', 'happy_plug.wav']
-	file_name = file_names[1]
+	file_name = file_names[0]
 
 	# some paths
 	file_path = 'ignore/ass4_data/'
@@ -139,14 +137,11 @@ if __name__ == '__main__':
 
 	# calc stft [m x n] and use magnitude
 	X = np.abs( custom_stft(x, N=N, hop=hop, norm=True)[:, :N//2] )
-
 	print("X: ", X.shape)
 
 	# pca
 	X_pca, ev = calc_pca(X)
-
 	print("PCA: ", X_pca.shape)
-
 
 	# NMF with lee seung algorithm
 	W, H, d = calc_nmf(X.T, r=r, algorithm='lee', max_iter=max_iter)
@@ -154,18 +149,22 @@ if __name__ == '__main__':
 	print("W: ", W.shape)
 	print("H: ", H.shape)
 
+	# Test array for shift function
+	x = np.array( [ [1, 2, 3, 4 ] , [5, 6, 7, 8 ] ] )
+	shift = -5
+
 
 	# --
 	# some plots
 	
 	# nmf	
-	plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0])
+	# plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0])
 	
 	# spec	
 	#plot_spec_pca(X, X_pca[:, :r], plot_path, name=file_name.split(".")[0])
 	
 	# plot of signal
-	#plot_signal(x, t, plot_path, name=file_name.split(".")[0])
+	# plot_signal(x, t, plot_path, name=file_name.split(".")[0])
 
-	plt.show()
+	# plt.show()
 

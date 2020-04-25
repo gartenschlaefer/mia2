@@ -3,7 +3,56 @@
 
 import numpy as np
 
+
+# Lecture 4:-------------------------------------------------------------------
+
+def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
+  """
+  perform a non-negative matrix factorization with selected algorithms
+  V: [m x n] = [features x samples] r: num of factorized components
+  algortithm:
+    - 'lee': Lee and Seung (1999)
+  """
+
+  # shape of V: [m features (DFT) x n samples (frames)]
+  m, n = V.shape
+  
+  # right-hand-side matrix 
+  H = np.random.rand(r, n)
+
+  # left-hand-side matrix
+  W = np.random.rand(m, r)
+
+  # ones matrix
+  Ones = np.ones((m, n))
+
+  # iterative update
+  for i in range(1, max_iter + 1):
+
+    # update right-hand side matrix
+    H = H * ( (W.T @ (V / (W @ H))) / (W.T @ Ones) )
+
+    # update left-hand side matrix
+    W = W * ( ((V / (W @ H) @ H.T )) / (Ones @ H.T) )
+
+    # distance measure
+    d = kl_div(V, W @ H)
+
+    # print distance mearure each 
+    if not i % n_print_dist or i == max_iter:
+      print("iteration: [{}], distance: [{}]".format(i, d))
+
+  return W, H, d
+
+
 # Lecture 3:-------------------------------------------------------------------
+
+def kl_div(x, y):
+  """
+  Kullback - Leibler Divergence as distance measure
+  """
+  return np.linalg.norm(x * np.log(x / y) - x + y)
+
 
 def get_onset_mat(file_name, var_name='GTF0s'):
   """
@@ -237,5 +286,66 @@ def calc_pca(x):
 
   # pca transformation
   return np.dot(x, eig_vec), eig_val
+
+
+# some basics-------------------------------------------------------------------
+def custom_stft(x, N=1024, hop=512, norm=True):
+  """
+  short time fourier transform
+  """
+  # windowing
+  w = np.hanning(N)
+
+  # apply windows
+  x_buff = np.multiply(w, buffer(x, N, N-hop))
+
+  # transformation matrix
+  H = np.exp(1j * 2 * np.pi / N * np.outer(np.arange(N), np.arange(N)))
+
+  # normalize if asked
+  if norm:
+    return 2 / N * np.dot(x_buff, H)
+
+  # transformed signal
+  return np.dot(x_buff, H)
+
+
+def buffer(x, n, ol=0):
+  """
+  buffer function like in matlab
+  """
+
+  # number of samples in window
+  n = int(n)
+
+  # overlap
+  ol = int(ol)
+
+  # hopsize
+  hop = n - ol
+
+  # number of windows
+  win_num = (len(x) - n) // hop + 1 
+
+  # remaining samples
+  r = int(np.remainder(len(x), hop))
+  if r:
+    win_num += 1;
+
+  # segments
+  windows = np.zeros((win_num, n))
+
+  # segmentation
+  for wi in range(0, win_num):
+
+    # remainder
+    if wi == win_num - 1 and r:
+      windows[wi] = np.concatenate((x[wi * hop :], np.zeros(n - len(x[wi * hop :]))))
+
+    # no remainder
+    else:
+      windows[wi] = x[wi * hop : (wi * hop) + n]
+
+  return windows
 
 

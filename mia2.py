@@ -41,11 +41,16 @@ def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
   # iterative update
   for i in range(1, max_iter + 1):
 
-    # update right-hand side matrix
-    H = H * ( (W.T @ (V / (W @ H))) / (W.T @ Ones) )
+    if algorithm == 'lee':
+    
+      # update right-hand side matrix
+      H = H * ( (W.T @ (V / (W @ H))) / (W.T @ Ones) )
 
-    # update left-hand side matrix
-    W = W * ( ((V / (W @ H) @ H.T )) / (Ones @ H.T) )
+      # update left-hand side matrix
+      W = W * ( ((V / (W @ H) @ H.T )) / (Ones @ H.T) )
+
+    if algorithm == 'smaragdis':
+      print( 'test' )
 
     # distance measure
     d = kl_div(V, W @ H)

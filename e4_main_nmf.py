@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
 	# print some infos
 	print("x length: ", len(x))
-	print("fames: ", len(x) / hop)
+	print("fames: ", len(x) // hop)
 
 	# time vector
 	t = np.arange(0, len(x)/fs, 1/fs)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 	print("PCA: ", X_pca.shape)
 
 	# NMF with lee seung algorithm
-	W, H, d = calc_nmf(X.T, r=r, algorithm='lee', max_iter=max_iter)
+	W, H, d = calc_nmf(X.T, r=r, algorithm='smaragdis', max_iter=max_iter)
 
 	print("W: ", W.shape)
 	print("H: ", H.shape)

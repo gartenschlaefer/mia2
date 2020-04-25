@@ -78,7 +78,7 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
         H = H * ( ( W_t.T @ time_shift( V / Lambda, -1*t ) )
                 / ( W_t.T @ Ones) )
 
-        W_t = W * ((( V / (Lambda) @ time_shift( H.T, t ))) / 
+        W_t = W_t * ((( V / (Lambda) @ time_shift( H.T, t ))) / 
                   ( Ones @ time_shift( H.T, t )))
 
         W[ : , : , t ] = W_t

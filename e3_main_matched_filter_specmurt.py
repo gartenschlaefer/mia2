@@ -118,15 +118,15 @@ if __name__ == '__main__':
     mat_file_name = '01-AchGottundHerr-GTF0s.mat'
 
     # Loading file in memory---------------------------------------------------
-    file_name = 'C2_A3.wav'
+    file_name = '01-AchGottundHerr_4Kanal.wav'
     file_path = 'ignore/sounds/'
     full_name = file_path + file_name
-    audio_data, sampling_rate = libr.load( full_name, sr=None )
+    audio_data, sampling_rate = libr.load( full_name, sr=None, duration=5 )
 
     # CQT Params---------------------------------------------------------------
     hop = 256
     start_note = 'C2'
-    cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop,  
+    cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
           fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
  
     # Define common harmonic structure-----------------------------------------
@@ -169,9 +169,9 @@ if __name__ == '__main__':
         else:
             update_amount = np.linalg.norm( ( u - u_pre_iter ) )
             if update_amount <= tolerance:
-                break
-            else:
                 continue
+            else:
+                break
             u_pre_iter = u
             
         u_bar = non_linear_mapping( u )
@@ -181,9 +181,9 @@ if __name__ == '__main__':
     # plot_harmonic_structure( chs ) 
     # plot_pipeline( v, inv_chs, u, u, u_bar )
     plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
-                bins_per_octave=12 ), np.abs( u_bar [ : , 0 ]))
-    # plt.xlabel( 'Frequency log-scale' )
-    # plt.ylabel( 'Fundamental frequency distribution' )
+                bins_per_octave=12 ), np.abs( u_bar [ : , -1 ]))
+    plt.xlabel( 'Frequency log-scale' )
+    plt.ylabel( 'Fundamental frequency distribution' )
     plt.show()
 
     # get the onsets and midi notes of the audiofile---------------------------

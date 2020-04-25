@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft, ifft
 
 # mia2 lib
-from mia2 import *
+from mia2 import custom_stft
+from mia2 import calc_pca
+from mia2 import calc_nmf
 
 import librosa as libr
 
@@ -30,7 +32,9 @@ def test_scipy_stft(x, fs, N, hop):
 	import scipy.signal
 
 	# scipy stft
-	_, _, X = scipy.signal.stft(x, fs=fs, window='hann', nperseg=N, noverlap=hop, nfft=N, detrend=False, return_onesided=True, boundary='zeros', padded=True, axis=-1)
+	_, _, X = scipy.signal.stft(x, 
+		fs=fs, window='hann', nperseg=N, noverlap=hop, nfft=N, detrend=False, 
+		return_onesided=True, boundary='zeros', padded=True, axis=-1 )
 	return X.T
 
 
@@ -107,7 +111,7 @@ if __name__ == '__main__':
 	plot_path = 'ignore/ass4_data/plots/'
 
 	# load file
-	x, fs = libr.load(file_path + file_name, sr=11025)
+	x, fs = libr.load( file_path + file_name, sr=11025 )
 
 	# --
 	# params
@@ -134,7 +138,7 @@ if __name__ == '__main__':
 	t = np.arange(0, len(x)/fs, 1/fs)
 
 	# calc stft [m x n] and use magnitude
-	X = np.abs(custom_stft(x, N=N, hop=hop, norm=True)[:, :N//2])
+	X = np.abs( custom_stft(x, N=N, hop=hop, norm=True)[:, :N//2] )
 
 	print("X: ", X.shape)
 

@@ -126,8 +126,12 @@ if __name__ == '__main__':
     # CQT Params---------------------------------------------------------------
     hop = 256
     start_note = 'C2'
+
+    # cqt shape [n features x m frames]
     cqt = libr.cqt( audio_data, sr=sampling_rate, hop_length=hop, 
           fmin=libr.note_to_hz( start_note ), n_bins=48, bins_per_octave=12 )
+
+    print("cqt: ", cqt.shape)
  
     # Define common harmonic structure-----------------------------------------
     cqt_bins = 48
@@ -136,7 +140,12 @@ if __name__ == '__main__':
     # First initialisation of fundamental frequency distribution---------------
     chs   = initial_harmonics( list_chs, np.zeros(( cqt_bins, 1 )), option=1 )
     u, v  = inverse_filter( cqt, chs, cqt_bins )
+    
+    # non-lin mapping [n x m]
     u_bar = non_linear_mapping( u )
+    u_bar_init = u_bar.copy()
+
+    # len u
     len_u = len( u_bar[ : , 0 ] )
 
     # iterative algorithm------------------------------------------------------
@@ -147,44 +156,79 @@ if __name__ == '__main__':
     t_matrix = np.zeros(( len_harm, num_cols ), dtype=complex)
     u_bar_matrix = np.zeros(( len_harm, num_rows ), dtype=complex)
 
+    # tolerance of iterations
+    tolerance = 1e-4
+
+    # frame index: i
     for i in range( num_cols ):
-        for j, elem_j in enumerate( list_chs[ 1: ] ):
-            u_bar_matrix[ j, elem_j : ] = u_bar[ 0 : len_u - elem_j , j ]     
-
-        A_matrix = u_bar_matrix @ u_bar_matrix.T 
-        inv_A_matrix = np.linalg.inv( A_matrix )
         
-        b_matrix[ : , i ] = u_bar_matrix @ ( v[ : , i ] - u_bar[ : , i ] )
-        t_matrix[ : , i ] = inv_A_matrix @ b_matrix[ : , j ] 
+        print("frame: ", i)
+        # iteration counter
+        it = 0
 
-        for k in list_chs[ 1: ]:
-            chs[ k ] = np.abs( np.amax(  t_matrix[ : , i ] ))
-        
-        u , v = inverse_filter( cqt, chs, cqt_bins )
+        # distance measure
+        d = 100
 
-        print( 'Number of iterations: {}'.format( i ) )
-        tolerance = 0.1
-        if i == 0:
-            u_pre_iter = u;
-        else:
-            update_amount = np.linalg.norm( ( u - u_pre_iter ) )
-            if update_amount <= tolerance:
-                continue
-            else:
-                break
-            u_pre_iter = u
+        # update harmonic weights until convergence
+        while d > tolerance and it < 10:
+
+          # update iteration counter
+          it += 1
+
+          # harmonic index: j
+          #for j, elem_j in enumerate( list_chs[ 1: ] ):
             
-        u_bar = non_linear_mapping( u )
+              # create transformation matrix
+              #u_bar_matrix[ j, elem_j : ] = u_bar[ 0 : len_u - elem_j, i ]  
+
+          # create transformation matrix
+          for r in range(num_rows):
+
+            u_bar_matrix[:, r] = np.roll(u_bar[:, i], -r)[list_chs[ 1: ]]
+
+          # calc A
+          A_matrix = u_bar_matrix @ u_bar_matrix.T 
+          inv_A_matrix = np.linalg.inv( A_matrix )
+          
+          # calc b vector
+          b_matrix[ : , i ] = u_bar_matrix @ ( v[ : , i ] -  np.power( np.abs( u_bar[ : , i ] ), 2 ))
+          
+          # calculate harmonic weights theta
+          t_matrix[ : , i ] = inv_A_matrix @ b_matrix[ : , i ] 
+
+          # mapping of weights to chs vector
+          for hi, k in enumerate(list_chs[ 1: ]):
+
+              # harmonics
+              chs[ k ] = t_matrix[ hi , i ]
+          
+          # inverse filtering
+          u[:, i] , v[:, i] = inverse_filter( cqt[:, i], np.squeeze(chs), cqt_bins )
+
+          # final mapping of frame
+          u_bar[:, i] = non_linear_mapping( u[:, i] )
+
+          # check after second iteration
+          if it > 1:
+
+            # calculate distance
+            d = np.linalg.norm( ( u_bar[:, i] - u_bar[:, i-1] ) )
+            print( 'Number of iterations: {} with dist: {}'.format( it, d ) )
+
+          # plt.figure()
+          # plt.plot(chs)
+          # plt.show()
+        
 
     # Plots--------------------------------------------------------------------
     # plot_cqt( cqt, sampling_rate, hop )
     # plot_harmonic_structure( chs ) 
     # plot_pipeline( v, inv_chs, u, u, u_bar )
-    plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
-                bins_per_octave=12 ), np.abs( u_bar [ : , -1 ]))
-    plt.xlabel( 'Frequency log-scale' )
-    plt.ylabel( 'Fundamental frequency distribution' )
-    plt.show()
+    # plt.plot( libr.cqt_frequencies(48, fmin=libr.note_to_hz('C2'), 
+    #             bins_per_octave=12 ), np.abs( u_bar [ : , -1 ]))
+    # plt.xlabel( 'Frequency log-scale' )
+    # plt.ylabel( 'Fundamental frequency distribution' )
+    # plt.show()
 
     # get the onsets and midi notes of the audiofile---------------------------
     onsets, m, t = get_onset_mat( file_path + mat_file_name )
@@ -199,8 +243,8 @@ if __name__ == '__main__':
     # print("onsets: ", onsets.shape)
     # print("midi: ", m.shape)
 
-    # plt.figure()
-    # plt.plot(t, m.T)
+    plt.figure()
+    plt.plot(t, m.T)
     #plt.show()
 
     # plt.figure()
@@ -210,11 +254,23 @@ if __name__ == '__main__':
     # plt.xlabel("frequency")
     # plt.show()
 
-    # plt.figure()
-    # plt.imshow(np.abs(u_bar_init), aspect='auto', extent=[0, t[-1], 
-    #     libr.core.note_to_midi('C6'), libr.core.note_to_midi('C2')])
-    # 
-    # plt.title("u bar")
-    # plt.ylabel("midi note")
-    # plt.xlabel("frames")
-    # plt.show()
+    plt.figure()
+    plt.imshow(np.abs(u_bar_init), aspect='auto')
+    plt.title("u bar init")
+    plt.xlabel("frames")
+    plt.ylabel("midi note")
+    #plt.show()
+
+    # normalizing
+    u_bar_norm = np.zeros(u_bar.shape)
+    for c in range(num_cols):
+      u_bar_norm[:, c] = u_bar[:, c] / np.max(u_bar[:, c])
+
+    plt.figure()
+    plt.imshow(np.abs(u_bar), aspect='auto', extent=[0, t[-1], libr.core.note_to_midi('C6'), libr.core.note_to_midi('C2')])
+    #plt.imshow(np.abs(u_bar_norm), aspect='auto', extent=[0, t[-1], libr.core.note_to_midi('C6'), libr.core.note_to_midi('C2')])
+    
+    plt.title("u bar")
+    plt.xlabel("time")
+    plt.ylabel("midi note")
+    plt.show()

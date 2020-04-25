@@ -5,7 +5,6 @@ import numpy as np
 
 
 # Lecture 4:-------------------------------------------------------------------
-
 def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms
@@ -46,7 +45,6 @@ def calc_nmf(V, r=7, algorithm='lee', max_iter=100, n_print_dist=10):
 
 
 # Lecture 3:-------------------------------------------------------------------
-
 def kl_div(x, y):
   """
   Kullback - Leibler Divergence as distance measure
@@ -347,5 +345,3 @@ def buffer(x, n, ol=0):
       windows[wi] = x[wi * hop : (wi * hop) + n]
 
   return windows
-
-

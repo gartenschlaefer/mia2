@@ -70,17 +70,21 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
 
     if algorithm == 'smaragdis':
       
+      # run through each time step
       for t in range( T ):
+
         # W_t has the dimension MxR
         W_t = W[ : , : , t ]
 
         # update right-hand side matrix
-        H = H * ( ( W_t.T @ time_shift( V / Lambda, -1*t ) )
-                / ( W_t.T @ Ones) )
+        H = H * ( ( W_t.T @ time_shift(V / Lambda, -1*t) ) / 
+                  ( W_t.T @ Ones) )
 
-        W_t = W_t * ((( V / (Lambda) @ time_shift( H.T, t ))) / 
-                  ( Ones @ time_shift( H.T, t )))
+        # update left-hand side matrix
+        W_t = W_t * ( ( (V / Lambda) @ time_shift( H, t ).T ) / 
+                  ( Ones @ time_shift( H, t ).T ) )
 
+        # update W
         W[ : , : , t ] = W_t
 
       # Update Lambda matrix for the next iteration

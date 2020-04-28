@@ -97,6 +97,61 @@ def plot_nmf_wh(W, H, d, r, max_iter, plot_path, name='no_name'):
 	plt.savefig("{}{}_nmf-H_d-{:.4f}_r-{}_it-{}".format(plot_path, name, d, r, max_iter).replace(".", "p") + '.png', dpi=150)
 
 
+def plot_nmf_smaragdis(X, W, H, d, r, max_iter, plot_path, name='no_name'):
+	"""
+	plot NMF matrices W and H
+	"""
+
+	fig = plt.figure(figsize=(8, 4))
+
+	# make a grid
+	gs = plt.GridSpec(2*r+1, 2*r+1, wspace=0.4, hspace=0.3)
+
+	# plot W matrix
+
+	# no time instance in W matrice
+	if len(W.shape) == 2:
+		ax = fig.add_subplot(gs[r+1:, :r])
+		ax.imshow(W, cmap='cividis', aspect='auto')
+
+	# Wt
+	else:
+		for w in range(r):
+
+			# plot W matrices
+			ax = fig.add_subplot(gs[r+1:, w])
+			ax.imshow(W[:, w, :], cmap='cividis', aspect='auto')
+			ax.set_xlabel("T")
+
+			# delete axis labels
+			if w != 0:
+				ax.set_yticks([])
+
+	# plot H matrix
+	for h in range(r):
+
+		# plot H matrices
+		ax = fig.add_subplot(gs[h, r+1:])
+		ax.plot(H[h])
+		ax.set_xlim([0, H.shape[1]])
+
+		# delete axis labels
+		if h != r-1:
+			ax.set_xticks([])
+
+	# DFT plot
+	ax = fig.add_subplot(gs[r+1:, r+1:])
+	ax.imshow(X.T, aspect='auto')
+	ax.set_ylabel("DFT")
+	ax.set_xlabel("Frames")
+
+	plt.savefig("{}{}_nmf-H_d-{:.4f}_r-{}_it-{}".format(plot_path, name, d, r, max_iter).replace(".", "p") + '.png', dpi=300)
+
+
+
+
+
+
 #------------------------------------------------------------------------------
 # Main function
 if __name__ == '__main__':
@@ -116,14 +171,14 @@ if __name__ == '__main__':
 	# params
 
 	# amount components
-	r = 7
+	r = 5
 
 	# number of max iterations
 	max_iter = 1000
 
 	# algorithm
-	algorithm = 'smaragdis'
-	#algorithm = 'lee'
+	#algorithm = 'smaragdis'
+	algorithm = 'lee'
 
 	# DFT size
 	#N = 1024
@@ -157,8 +212,11 @@ if __name__ == '__main__':
 	# --
 	# some plots
 	
+	# smaragdis
+	plot_nmf_smaragdis(X, W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0] + '_' + algorithm)
+
 	# nmf	
-	plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0] + '_' + algorithm)
+	#plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0] + '_' + algorithm)
 	
 	# spec	
 	#plot_spec_pca(X, X_pca[:, :r], plot_path, name=file_name.split(".")[0])
@@ -166,5 +224,5 @@ if __name__ == '__main__':
 	# plot of signal
 	# plot_signal(x, t, plot_path, name=file_name.split(".")[0])
 
-	# plt.show()
+	plt.show()
 

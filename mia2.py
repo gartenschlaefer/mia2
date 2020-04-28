@@ -46,11 +46,15 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
   
   # smaragdis algorithm init wt and ht matrix
   if algorithm == 'smaragdis':
-    W_t = np.ones( (M, R, T) ) * 1e-4
+
+    # init W matrix with time
+    W = np.ones( (M, R, T) ) * 1e-4
+
+    # Ht for collecting H over t
     H_t = np.zeros( (R, N, T) )
 
     # lambda matrix for nmf-deconvolution
-    Lambda = compute_lambda( W_t, H, T, M, N )
+    Lambda = compute_lambda( W, H, T, M, N )
 
   # ones matrix
   Ones = np.ones( (M, N) )
@@ -71,26 +75,26 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
 
     if algorithm == 'smaragdis':
 
-      # run through each time step
+      # run through each time step for H
       for t in range( T ):
 
-        # update right-hand side matrix
-        H_t[:, :, t] = ( ( W_t[:, :, t].T @ time_shift(V / Lambda, -1*t) ) / ( W_t[:, :, t].T @ Ones) )
+        # collect time steps
+        H_t[:, :, t] = ( ( W[:, :, t].T @ time_shift(V / Lambda, -1*t) ) / ( W[:, :, t].T @ Ones) )
 
-        # update left-hand side matrix
-        W_t[:, :, t] = W_t[:, :, t] * ( ( (V / Lambda) @ time_shift( H, t ).T ) / ( Ones @ time_shift( H, t ).T ) )
-
-        # normalize W_t
-        W_t[:, :, t] = W_t[:, :, t] / np.linalg.norm(W_t[:, :, t])
-
-      # update H
+      # update right-hand side matrix
       H = H * np.mean( H_t, axis=2 )
 
-      # update W
-      W = np.mean( W_t, axis=2 )
+      # run through each time step for W
+      for t in range( T ):
+
+        # update left-hand side matrix
+        W[:, :, t] = W[:, :, t] * ( ( (V / Lambda) @ time_shift( H, t ).T ) / ( Ones @ time_shift( H, t ).T ) )
+
+        # normalize W
+        W[:, :, t] = W[:, :, t] / np.linalg.norm(W[:, :, t])
 
       # Update Lambda matrix for the next iteration
-      Lambda = compute_lambda( W_t, H, T, M, N )
+      Lambda = compute_lambda( W, H, T, M, N )
 
       # distance measure
       d = kl_div( V, Lambda )

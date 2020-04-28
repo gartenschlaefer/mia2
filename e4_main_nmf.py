@@ -89,6 +89,7 @@ def plot_nmf_wh(W, H, d, r, max_iter, plot_path, name='no_name'):
 	plt.imshow(H, cmap='magma', aspect='auto')
 	plt.ylabel("Rows of H")
 	plt.xlabel("frames")
+	plt.ylim([-0.5, r-0.5])
 
 	ax = plt.gca()
 	ax.set_yticks(np.arange(0, r, 1))
@@ -115,10 +116,14 @@ if __name__ == '__main__':
 	# params
 
 	# amount components
-	r = 4
+	r = 7
 
 	# number of max iterations
 	max_iter = 1000
+
+	# algorithm
+	algorithm = 'smaragdis'
+	#algorithm = 'lee'
 
 	# DFT size
 	#N = 1024
@@ -144,7 +149,7 @@ if __name__ == '__main__':
 	print("PCA: ", X_pca.shape)
 
 	# NMF with lee seung algorithm
-	W, H, d = calc_nmf(X.T, R=r, T=10, algorithm='smaragdis', max_iter=max_iter)
+	W, H, d = calc_nmf(X.T, R=r, T=10, algorithm=algorithm, max_iter=max_iter)
 
 	print("W: ", W.shape)
 	print("H: ", H.shape)
@@ -153,7 +158,7 @@ if __name__ == '__main__':
 	# some plots
 	
 	# nmf	
-	# plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0])
+	plot_nmf_wh(W, H, d, r, max_iter, plot_path, name=file_name.split(".")[0] + '_' + algorithm)
 	
 	# spec	
 	#plot_spec_pca(X, X_pca[:, :r], plot_path, name=file_name.split(".")[0])

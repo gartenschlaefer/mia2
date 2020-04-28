@@ -42,14 +42,15 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
   H = np.random.rand( R, N )
 
   # left-hand-side matrix, depending on the algorithm
-  if algorithm == 'lee':
-    W = np.random.rand( M, R )
+  W = np.random.rand( M, R )
   
+  # smaragdis algorithm init wt and ht matrix
   if algorithm == 'smaragdis':
-    W = np.random.rand( M, R, T)
+    W_t = np.ones( (M, R, T) ) * 1e-4
+    H_t = np.zeros( (R, N, T) )
 
-  # lambda matrix for nmf-deconvolution
-  Lambda = compute_lambda( W, H, T, M, N )
+    # lambda matrix for nmf-deconvolution
+    Lambda = compute_lambda( W_t, H, T, M, N )
 
   # ones matrix
   Ones = np.ones( (M, N) )
@@ -69,29 +70,30 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
       d = kl_div(V, W @ H)
 
     if algorithm == 'smaragdis':
-      
+
       # run through each time step
       for t in range( T ):
 
-        # W_t has the dimension MxR
-        W_t = W[ : , : , t ]
-
         # update right-hand side matrix
-        H = H * ( ( W_t.T @ time_shift(V / Lambda, -1*t) ) / 
-                  ( W_t.T @ Ones) )
+        H_t[:, :, t] = ( ( W_t[:, :, t].T @ time_shift(V / Lambda, -1*t) ) / ( W_t[:, :, t].T @ Ones) )
 
         # update left-hand side matrix
-        W_t = W_t * ( ( (V / Lambda) @ time_shift( H, t ).T ) / 
-                  ( Ones @ time_shift( H, t ).T ) )
+        W_t[:, :, t] = W_t[:, :, t] * ( ( (V / Lambda) @ time_shift( H, t ).T ) / ( Ones @ time_shift( H, t ).T ) )
 
-        # update W
-        W[ : , : , t ] = W_t
+        # normalize W_t
+        W_t[:, :, t] = W_t[:, :, t] / np.linalg.norm(W_t[:, :, t])
+
+      # update H
+      H = H * np.mean( H_t, axis=2 )
+
+      # update W
+      W = np.mean( W_t, axis=2 )
 
       # Update Lambda matrix for the next iteration
-      Lambda = compute_lambda( W, H, T, M, N  )
+      Lambda = compute_lambda( W_t, H, T, M, N )
 
       # distance measure
-      d = kl_div(V, Lambda )
+      d = kl_div( V, Lambda )
 
     # print distance mearure each 
     if not i % n_print_dist or i == max_iter:

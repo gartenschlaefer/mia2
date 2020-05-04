@@ -3,6 +3,118 @@
 
 import numpy as np
 
+# Lecture 6:-------------------------------------------------------------------
+
+def lda_classify(x, w, bias, label_list):
+  """
+  classification with lda classifier using weights and bias
+  return pridicted classes y_hat
+  transforms data: 
+  [
+    x_h = w.T @ x
+  ]
+  """
+
+  # TODO: implementation
+
+  return None
+
+
+def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
+  """
+  compute lda classifier, extract weights and biase vectors
+  """
+
+  # TODO: check algorithm again
+
+  # n samples, m features
+  n, m = x.shape
+
+  # amount of classes
+  labels = np.unique(y)
+  n_classes = len(labels)
+
+  # averall mean
+  mu = np.mean(x, axis=0)
+
+  #print("mu: ", mu.shape)
+
+  # class occurence probability
+  p_k = np.zeros(n_classes)
+  mu_k = np.zeros((n_classes, m))
+  cov_k = np.zeros((n_classes, m, m))
+
+  label_list = []
+
+  # calculate mean class occurence and mean vector
+  for k, label in enumerate(labels):
+
+    # append label
+    label_list.append(label)
+
+    # get class samples
+    class_samples = x[y==label, :]
+
+    # class ocurrence probability
+    p_k[k] = len(class_samples) / n
+
+    # mean vector of classes
+    mu_k[k] = np.mean(class_samples, axis=0)
+
+    # covariance matrix of classes
+    cov_k[k] = np.cov(class_samples, rowvar=False)
+
+  # calculate between class scatter matrix -> S_b
+  S_b = p_k * (mu_k - mu).T @ (mu_k - mu)
+
+  # copy covarianc matrix
+  cov_copy = np.copy(cov_k)
+
+  for i in range(len(p_k)):
+    cov_copy[i] *= p_k[i]
+
+  # calculate within class scatter matrix -> S_w
+  S_w = np.sum(cov_copy, axis=0)
+
+  # class dependent use covariance
+  if method == 'class_dependent':
+
+    # init
+    w = np.zeros((n_classes, m, n_lda_dim))
+    bias = np.zeros(n_classes)
+    x_h = np.zeros((n, n_lda_dim))
+
+    # run through all classes
+    for k in range(n_classes):
+
+      # compute eigenvector
+      eig_val, eig_vec = np.linalg.eig(np.linalg.inv(cov_k[k]) @  S_b)
+
+      # use first eigenvector
+      w[k] = eig_vec[:, 0:n_lda_dim].real
+
+      # transformierte daten
+      x_h[y==label_list[k]] = (w[k].T @ x[y==label_list[k]].T).T
+
+      # bias
+      bias[k] = np.mean(x_h[y==label_list[k]])
+
+
+  # TODO: not class dependent use S_w 
+  else:
+
+    # compute eigenvector
+    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(S_w) @  S_b)
+    
+    # first row eigenvector from eigenvalue 0
+    w = eig_vec[:, 0].real
+
+    # bias
+    #bias = w.T @ mu
+
+  return w, bias, x_h, label_list
+
+
 def compute_lambda( W, H, T, M, N ):
   
   # First init. of Lambda matrix
@@ -338,7 +450,7 @@ def calc_sdm(feat_frames, distance_measure='euclidean', emb=None):
 # Lecture 1:-------------------------------------------------------------------
 def calc_pca(x):
   """
-  calculate pca of signal, already ordered, n x m (samples x features)
+  calculate pca of signal, already ordered, m x n (samples x features)
   """
 
   # eigen stuff -> already sorted

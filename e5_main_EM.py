@@ -89,9 +89,6 @@ def em_algorithm( X, num_centers, max_iter ):
         # summed R over n [k]
         Nk = np.einsum( 'ij->i', R )
 
-        #dimension = ( num_components, num_centers, num_centers )
-        #Nk_ext = np.repeat(Nk,num_components*num_centers).reshape(dimension)
-        
         # weights alpha for each kernel k [k, 1]
         alpha = Nk.reshape(( num_centers, 1 )) / num_samples
 
@@ -101,21 +98,14 @@ def em_algorithm( X, num_centers, max_iter ):
         #   R: [k x n]  k kernels
         #   X: [m x n]  m features, n samples
         #   Mu:[k x m]
-
         Mu = np.einsum( 'kn, mn -> km', R, X ) / Nk
-        #Mu = np.einsum( 'ij,nj->in', R, X ) / Nk
 
         # [k x m x n] = [m x n] - [k x m x new]
         x_mu = X - Mu[:, :, np.newaxis]
 
         # covar [k x m x m]
-        Sigma = np.einsum('kn, kmn, kqn -> kmq', R, x_mu, x_mu) / Nk[:, np.newaxis, np.newaxis]
-
-        #test_1 = np.einsum( 'ij,ik->ijk' , X.T, X.T )
-        #test_2 = np.einsum( 'ijl,ik->kjl', test_1, R.T ) / Nk_ext
-        #test_3 = np.einsum( 'mn,ml->mnl' , Mu, Mu )
-        #Sigma = ( test_2 - test_3 )
-        
+        Sigma = ( np.einsum('kn, kmn, kqn -> kmq', R, x_mu, x_mu) 
+            / Nk[:, np.newaxis, np.newaxis] )
         counter += 1
 
     return Mu, Sigma
@@ -136,14 +126,12 @@ def visualization( X ):
     plt.show()
 
 if __name__ == "__main__":
-
-    #annotations = loadmat( 'EM_data.mat' )
     annotations = loadmat( './ignore/ass5_data/EM_data.mat' )
     
     # Covariance matrices and Mean vectors for cluster 1 and 2
     # For comparisions! Not needed for the EM-Algorithm
-    S_1 = annotations[ 'S1' ]
-    S_2 = annotations[ 'S2' ]
+    S_1  = annotations[ 'S1' ]
+    S_2  = annotations[ 'S2' ]
     mu_1 = annotations[ 'mu1' ]
     mu_2 = annotations[ 'mu2' ]
 
@@ -155,6 +143,6 @@ if __name__ == "__main__":
 
     # EM-Algorithm
     num_centers = 2
-    Mu, Sigma = em_algorithm( X, num_centers, max_iter=10 )
+    Mu, Sigma = em_algorithm( X, num_centers, max_iter=100 )
 
     # TODO: Visualization of GMM kernels

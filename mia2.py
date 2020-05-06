@@ -8,10 +8,10 @@ import numpy as np
 def lda_classify(x, w, bias, label_list):
   """
   classification with lda classifier using weights and bias
-  return pridicted classes y_hat
+  return predicted classes y_hat
   transforms data: 
   [
-    x_h = w.T @ x + bias
+    x_h = w.T @ x
   ]
   and classifies it
   """
@@ -23,7 +23,7 @@ def lda_classify(x, w, bias, label_list):
 
 def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
   """
-  train lda classifier, extract weights and biase vectors x:[n samples x m features]
+  train lda classifier, extract weights and bias vectors x:[n samples x m features]
   return weights, biases, transformed data and label list
   """
 
@@ -34,7 +34,7 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
   labels = np.unique(y)
   n_classes = len(labels)
 
-  # averall mean [m]
+  # overall mean [m]
   mu = np.mean(x, axis=0)
 
   # init statistics
@@ -52,7 +52,7 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
     # get class samples
     class_samples = x[y==label, :]
 
-    # class ocurrence probability [k]
+    # class occurrence probability [k]
     p_k[k] = len(class_samples) / n
 
     # mean vector of classes [k x m]
@@ -78,7 +78,7 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
     # real valued eigenvals [k-1 x m]
     w = eig_vec[:n_classes-1, :]
 
-    # transformierte daten [k-1 x n] = [k-1 x m] @ [m x n]
+    # transformed data [k-1 x n] = [k-1 x m] @ [m x n]
     x_h = w @ x.T
 
     # bias [k-1]
@@ -102,7 +102,7 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
       # use first eigenvector
       w[k] = eig_vec[:, :n_lda_dim].real
 
-      # transformierte daten
+      # transformed data
       x_h[y==label_list[k]] = (w[k].T @ x[y==label_list[k]].T).T
 
       # bias
@@ -139,7 +139,7 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms
   V: [m x n] = [features x samples] r: num of factorized components
-  algortithm:
+  algorithm:
     - 'lee': Lee and Seung (1999)
   """
 
@@ -207,7 +207,7 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
       # distance measure
       d = kl_div( V, Lambda )
 
-    # print distance mearure each 
+    # print distance measure each 
     if not i % n_print_dist or i == max_iter:
       print("iteration: [{}], distance: [{}]".format(i, d))
 
@@ -233,7 +233,7 @@ def get_onset_mat(file_name, var_name='GTF0s'):
   # read mat files
   mat = loadmat(file_name)
 
-  # get midi notes with funcdamental frequencies
+  # get midi notes with fundamental frequencies
   m = np.round(mat[var_name])
 
   # gradients of notes
@@ -259,16 +259,16 @@ def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
   Kameoka,H.; Sagayama S., in particular: Section 4.A.
 
   As a nonlinear function, a sigmoid function or a hard 
-  threshholding can be used:
+  thresholding can be used:
 
   u_bar(x)  = u(x) / (1 + exp{-alpha( u(x)/u_max - beta)} ),
   u_max     = max{u(x)} for all x (x -> log-scaled frequency) 
 
   input params (see equation 13 of the same paper):
   -------------------------------------------------
-  @u      ... numpy array containing the powerspectrum, log-frequency  scaled.
+  @u      ... numpy array containing the power-spectrum, log-frequency  scaled.
   @alpha  ... represents a degree o f fuzziness
-  @beta   ... threshhold magnitude paramter, corresponds to the value under 
+  @beta   ... threshold magnitude parameter, corresponds to the value under 
               which frequency components are assumed to be unwanted.
 
   output params (see equation 14 of the same paper):

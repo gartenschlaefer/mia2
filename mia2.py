@@ -11,8 +11,9 @@ def lda_classify(x, w, bias, label_list):
   return pridicted classes y_hat
   transforms data: 
   [
-    x_h = w.T @ x
+    x_h = w.T @ x + bias
   ]
+  and classifies it
   """
 
   # TODO: implementation
@@ -20,33 +21,29 @@ def lda_classify(x, w, bias, label_list):
   return None
 
 
-def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
+def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
   """
-  compute lda classifier, extract weights and biase vectors
+  train lda classifier, extract weights and biase vectors x:[n samples x m features]
+  return weights, biases, transformed data and label list
   """
-
-  # TODO: check algorithm again
 
   # n samples, m features
   n, m = x.shape
 
-  # amount of classes
+  # labels and classes
   labels = np.unique(y)
   n_classes = len(labels)
 
-  # averall mean
+  # averall mean [m]
   mu = np.mean(x, axis=0)
 
-  #print("mu: ", mu.shape)
+  # init statistics
+  p_k, mu_k, cov_k = np.zeros(n_classes), np.zeros((n_classes, m)), np.zeros((n_classes, m, m))
 
-  # class occurence probability
-  p_k = np.zeros(n_classes)
-  mu_k = np.zeros((n_classes, m))
-  cov_k = np.zeros((n_classes, m, m))
-
+  # init label list
   label_list = []
 
-  # calculate mean class occurence and mean vector
+  # calculate statistics from samples for further processing
   for k, label in enumerate(labels):
 
     # append label
@@ -55,29 +52,41 @@ def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
     # get class samples
     class_samples = x[y==label, :]
 
-    # class ocurrence probability
+    # class ocurrence probability [k]
     p_k[k] = len(class_samples) / n
 
-    # mean vector of classes
+    # mean vector of classes [k x m]
     mu_k[k] = np.mean(class_samples, axis=0)
 
-    # covariance matrix of classes
+    # covariance matrix of classes [k x m x m]
     cov_k[k] = np.cov(class_samples, rowvar=False)
 
-  # calculate between class scatter matrix -> S_b
-  S_b = p_k * (mu_k - mu).T @ (mu_k - mu)
 
-  # copy covarianc matrix
-  cov_copy = np.copy(cov_k)
+  # calculate between class scatter matrix S_b [m x m]
+  S_b = np.einsum('k, km, kn -> mn', p_k, mu_k-mu, mu_k-mu)
 
-  for i in range(len(p_k)):
-    cov_copy[i] *= p_k[i]
+  # calculate within class scatter matrix S_w [m x m]
+  S_w = np.einsum('k, kmn -> mn', p_k, cov_k)
 
-  # calculate within class scatter matrix -> S_w
-  S_w = np.sum(cov_copy, axis=0)
 
-  # class dependent use covariance
-  if method == 'class_dependent':
+  # class independent method - standard: use S_w
+  if method == 'class_independent':
+
+    # compute eigenvector
+    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(S_w) @  S_b)
+    
+    # real valued eigenvals [k-1 x m]
+    w = eig_vec[:n_classes-1, :]
+
+    # transformierte daten [k-1 x n] = [k-1 x m] @ [m x n]
+    x_h = w @ x.T
+
+    # bias [k-1]
+    bias = np.mean(x_h, axis=1)
+
+
+  # class dependent use covariance instead of S_w
+  elif method == 'class_dependent':
 
     # init
     w = np.zeros((n_classes, m, n_lda_dim))
@@ -91,26 +100,13 @@ def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
       eig_val, eig_vec = np.linalg.eig(np.linalg.inv(cov_k[k]) @  S_b)
 
       # use first eigenvector
-      w[k] = eig_vec[:, 0:n_lda_dim].real
+      w[k] = eig_vec[:, :n_lda_dim].real
 
       # transformierte daten
       x_h[y==label_list[k]] = (w[k].T @ x[y==label_list[k]].T).T
 
       # bias
       bias[k] = np.mean(x_h[y==label_list[k]])
-
-
-  # TODO: not class dependent use S_w 
-  else:
-
-    # compute eigenvector
-    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(S_w) @  S_b)
-    
-    # first row eigenvector from eigenvalue 0
-    w = eig_vec[:, 0].real
-
-    # bias
-    #bias = w.T @ mu
 
   return w, bias, x_h, label_list
 

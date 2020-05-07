@@ -25,27 +25,36 @@ def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	plt.scatter(x[:, 0], x[:, 1], c=y, cmap=plt.cm.Set1, edgecolor='k')
 	plt.xlabel('Sepal length')
 	plt.ylabel('Sepal width')
-
 	plt.xlim(x[:, 0].min() - .5, x[:, 0].max() + .5)
 	plt.ylim(x[:, 1].min() - .5, x[:, 1].max() + .5)
-	plt.xticks(())
-	plt.yticks(())
+	#plt.xticks(())
+	#plt.yticks(())
 
 	if plot:
 		plt.savefig(plot_path + name + '_raw.png', dpi=150)
 
-	# plot pca
+	# pca 2d
+	plt.figure(figsize=(8, 6))
+	plt.scatter(x_pca[:, 0], x_pca[:, 1], c=y, cmap=plt.cm.Set1, edgecolor='k')
+	plt.xlabel('pca component 1')
+	plt.ylabel('pca component 2')
+	plt.xlim(x_pca[:, 0].min() - .5, x_pca[:, 0].max() + .5)
+	plt.ylim(x_pca[:, 1].min() - .5, x_pca[:, 1].max() + .5)
+
+	if plot:
+		plt.savefig(plot_path + name + '_pca-2d.png', dpi=150)
+
+	# pca 3d
 	fig = plt.figure(figsize=(8, 6))
 	ax = Axes3D(fig, elev=-150, azim=110)
 
 	ax.scatter(x_pca[:, 0], x_pca[:, 1], x_pca[:, 2], c=y, cmap=plt.cm.Set1, edgecolor='k', s=40)
 
-	ax.set_title("First three PCA directions")
-	ax.set_xlabel("1st eigenvector")
+	ax.set_xlabel("pca component 1")
 	ax.w_xaxis.set_ticklabels([])
-	ax.set_ylabel("2nd eigenvector")
+	ax.set_ylabel("pca component 2")
 	ax.w_yaxis.set_ticklabels([])
-	ax.set_zlabel("3rd eigenvector")
+	ax.set_zlabel("pca component 3")
 	ax.w_zaxis.set_ticklabels([])
 
 	if plot:
@@ -63,8 +72,8 @@ def plot_transformed_data(x, y, plot_path, name, plot=False):
 	plt.ylabel('lda component 2')
 	plt.xlim(x[0].min() - .5, x[0].max() + .5)
 	plt.ylim(x[1].min() - .5, x[1].max() + .5)
-	plt.xticks(())
-	plt.yticks(())
+	#plt.xticks(())
+	#plt.yticks(())
 
 	if plot:
 		plt.savefig(plot_path + name + '.png', dpi=150)

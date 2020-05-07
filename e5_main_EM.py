@@ -62,8 +62,8 @@ def em_algorithm( X, num_centers, max_iter ):
         num_centers ))
 
     # Sigma is the covariance matrix of dimension 2 x 2 x 2
-    # Sigma[ : , : , 0 ] -> 2 x 2 covariance matrix of cluster 1 with Mu 1
-    # Sigma[ : , : , 1 ] -> 2 x 2 covariance matrix of cluster 2 with Mu 2
+    # Sigma[ 0, : , : ] -> 2 x 2 covariance matrix of cluster 1 with Mu 1
+    # Sigma[ 1, : , : ] -> 2 x 2 covariance matrix of cluster 2 with Mu 2
     init_Sigma = np.random.uniform( low=-1, high=1, size=( num_components , 
         num_centers))
 
@@ -89,9 +89,6 @@ def em_algorithm( X, num_centers, max_iter ):
         # summed R over n [k]
         Nk = np.einsum( 'ij->i', R )
 
-        #dimension = ( num_components, num_centers, num_centers )
-        #Nk_ext = np.repeat(Nk,num_components*num_centers).reshape(dimension)
-        
         # weights alpha for each kernel k [k, 1]
         alpha = Nk.reshape(( num_centers, 1 )) / num_samples
 
@@ -101,21 +98,14 @@ def em_algorithm( X, num_centers, max_iter ):
         #   R: [k x n]  k kernels
         #   X: [m x n]  m features, n samples
         #   Mu:[k x m]
-
         Mu = np.einsum( 'kn, mn -> km', R, X ) / Nk
-        #Mu = np.einsum( 'ij,nj->in', R, X ) / Nk
 
         # [k x m x n] = [m x n] - [k x m x new]
         x_mu = X - Mu[:, :, np.newaxis]
 
         # covar [k x m x m]
-        Sigma = np.einsum('kn, kmn, kqn -> kmq', R, x_mu, x_mu) / Nk[:, np.newaxis, np.newaxis]
-
-        #test_1 = np.einsum( 'ij,ik->ijk' , X.T, X.T )
-        #test_2 = np.einsum( 'ijl,ik->kjl', test_1, R.T ) / Nk_ext
-        #test_3 = np.einsum( 'mn,ml->mnl' , Mu, Mu )
-        #Sigma = ( test_2 - test_3 )
-        
+        Sigma = ( np.einsum('kn, kmn, kqn -> kmq', R, x_mu, x_mu) 
+            / Nk[:, np.newaxis, np.newaxis] )
         counter += 1
 
     return Mu, Sigma
@@ -124,7 +114,7 @@ def visualization( X ):
 
     fig, ax = plt.subplots()
     
-    ax.scatter( X[ 0 , : ] , X[ 1 , : ], s=10 ,alpha=0.5 )
+    ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 ,alpha=0.5 )
 
     ax.set_xlabel( r'$x_1$', fontsize=16 )
     ax.set_ylabel( r'$x_2$', fontsize=16 )
@@ -136,25 +126,24 @@ def visualization( X ):
     plt.show()
 
 if __name__ == "__main__":
-
-    #annotations = loadmat( 'EM_data.mat' )
     annotations = loadmat( './ignore/ass5_data/EM_data.mat' )
     
     # Covariance matrices and Mean vectors for cluster 1 and 2
     # For comparisions! Not needed for the EM-Algorithm
-    S_1 = annotations[ 'S1' ]
-    S_2 = annotations[ 'S2' ]
+    S_1  = annotations[ 'S1' ]
+    S_2  = annotations[ 'S2' ]
     mu_1 = annotations[ 'mu1' ]
     mu_2 = annotations[ 'mu2' ]
+
+    kernels = { 'K1' : ( S_1, mu_1 ) , 'K2' : ( S_2, mu_2 ) }
 
     # The data itself
     X = annotations[ 'X' ]
 
-    # Make a scatter plot for visualization
-    # visualization( X )
-
     # EM-Algorithm
     num_centers = 2
-    Mu, Sigma = em_algorithm( X, num_centers, max_iter=10 )
+    Mu, Sigma = em_algorithm( X, num_centers, max_iter=100 )
 
-    # TODO: Visualization of GMM kernels
+    # Make a scatter plot for visualization
+    # visualization( X, Mu, Sigma,  )
+   

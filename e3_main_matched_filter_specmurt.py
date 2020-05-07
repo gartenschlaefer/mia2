@@ -148,6 +148,8 @@ if __name__ == '__main__':
     u_bar_matrix = np.zeros(( len_harm, num_rows ), dtype=complex)
 
     for i in range( num_cols ):
+        
+        # Can be done easier with np.roll()
         for j, elem_j in enumerate( list_chs[ 1: ] ):
             u_bar_matrix[ j, elem_j : ] = u_bar[ 0 : len_u - elem_j , j ]     
 

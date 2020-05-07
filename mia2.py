@@ -8,11 +8,12 @@ import numpy as np
 def lda_classify(x, w, bias, label_list):
   """
   classification with lda classifier using weights and bias
-  return pridicted classes y_hat
+  return predicted classes y_hat
   transforms data: 
   [
     x_h = w.T @ x
   ]
+  and classifies it
   """
 
   # TODO: implementation
@@ -20,33 +21,29 @@ def lda_classify(x, w, bias, label_list):
   return None
 
 
-def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
+def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
   """
-  compute lda classifier, extract weights and biase vectors
+  train lda classifier, extract weights and bias vectors x:[n samples x m features]
+  return weights, biases, transformed data and label list
   """
-
-  # TODO: check algorithm again
 
   # n samples, m features
   n, m = x.shape
 
-  # amount of classes
+  # labels and classes
   labels = np.unique(y)
   n_classes = len(labels)
 
-  # averall mean
+  # overall mean [m]
   mu = np.mean(x, axis=0)
 
-  #print("mu: ", mu.shape)
+  # init statistics
+  p_k, mu_k, cov_k = np.zeros(n_classes), np.zeros((n_classes, m)), np.zeros((n_classes, m, m))
 
-  # class occurence probability
-  p_k = np.zeros(n_classes)
-  mu_k = np.zeros((n_classes, m))
-  cov_k = np.zeros((n_classes, m, m))
-
+  # init label list
   label_list = []
 
-  # calculate mean class occurence and mean vector
+  # calculate statistics from samples for further processing
   for k, label in enumerate(labels):
 
     # append label
@@ -55,29 +52,41 @@ def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
     # get class samples
     class_samples = x[y==label, :]
 
-    # class ocurrence probability
+    # class occurrence probability [k]
     p_k[k] = len(class_samples) / n
 
-    # mean vector of classes
+    # mean vector of classes [k x m]
     mu_k[k] = np.mean(class_samples, axis=0)
 
-    # covariance matrix of classes
+    # covariance matrix of classes [k x m x m]
     cov_k[k] = np.cov(class_samples, rowvar=False)
 
-  # calculate between class scatter matrix -> S_b
-  S_b = p_k * (mu_k - mu).T @ (mu_k - mu)
 
-  # copy covarianc matrix
-  cov_copy = np.copy(cov_k)
+  # calculate between class scatter matrix S_b [m x m]
+  S_b = np.einsum('k, km, kn -> mn', p_k, mu_k-mu, mu_k-mu)
 
-  for i in range(len(p_k)):
-    cov_copy[i] *= p_k[i]
+  # calculate within class scatter matrix S_w [m x m]
+  S_w = np.einsum('k, kmn -> mn', p_k, cov_k)
 
-  # calculate within class scatter matrix -> S_w
-  S_w = np.sum(cov_copy, axis=0)
 
-  # class dependent use covariance
-  if method == 'class_dependent':
+  # class independent method - standard: use S_w
+  if method == 'class_independent':
+
+    # compute eigenvector
+    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(S_w) @  S_b)
+    
+    # real valued eigenvals [k-1 x m]
+    w = eig_vec[:n_classes-1, :]
+
+    # transformed data [k-1 x n] = [k-1 x m] @ [m x n]
+    x_h = w @ x.T
+
+    # bias [k-1]
+    bias = np.mean(x_h, axis=1)
+
+
+  # class dependent use covariance instead of S_w
+  elif method == 'class_dependent':
 
     # init
     w = np.zeros((n_classes, m, n_lda_dim))
@@ -91,26 +100,13 @@ def calc_lda_classifier(x, y, method='class_dependent', n_lda_dim=1):
       eig_val, eig_vec = np.linalg.eig(np.linalg.inv(cov_k[k]) @  S_b)
 
       # use first eigenvector
-      w[k] = eig_vec[:, 0:n_lda_dim].real
+      w[k] = eig_vec[:, :n_lda_dim].real
 
-      # transformierte daten
+      # transformed data
       x_h[y==label_list[k]] = (w[k].T @ x[y==label_list[k]].T).T
 
       # bias
       bias[k] = np.mean(x_h[y==label_list[k]])
-
-
-  # TODO: not class dependent use S_w 
-  else:
-
-    # compute eigenvector
-    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(S_w) @  S_b)
-    
-    # first row eigenvector from eigenvalue 0
-    w = eig_vec[:, 0].real
-
-    # bias
-    #bias = w.T @ mu
 
   return w, bias, x_h, label_list
 
@@ -143,7 +139,7 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms
   V: [m x n] = [features x samples] r: num of factorized components
-  algortithm:
+  algorithm:
     - 'lee': Lee and Seung (1999)
   """
 
@@ -211,7 +207,7 @@ def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
       # distance measure
       d = kl_div( V, Lambda )
 
-    # print distance mearure each 
+    # print distance measure each 
     if not i % n_print_dist or i == max_iter:
       print("iteration: [{}], distance: [{}]".format(i, d))
 
@@ -237,7 +233,7 @@ def get_onset_mat(file_name, var_name='GTF0s'):
   # read mat files
   mat = loadmat(file_name)
 
-  # get midi notes with funcdamental frequencies
+  # get midi notes with fundamental frequencies
   m = np.round(mat[var_name])
 
   # gradients of notes
@@ -263,16 +259,16 @@ def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
   Kameoka,H.; Sagayama S., in particular: Section 4.A.
 
   As a nonlinear function, a sigmoid function or a hard 
-  threshholding can be used:
+  thresholding can be used:
 
   u_bar(x)  = u(x) / (1 + exp{-alpha( u(x)/u_max - beta)} ),
   u_max     = max{u(x)} for all x (x -> log-scaled frequency) 
 
   input params (see equation 13 of the same paper):
   -------------------------------------------------
-  @u      ... numpy array containing the powerspectrum, log-frequency  scaled.
+  @u      ... numpy array containing the power-spectrum, log-frequency  scaled.
   @alpha  ... represents a degree o f fuzziness
-  @beta   ... threshhold magnitude paramter, corresponds to the value under 
+  @beta   ... threshold magnitude parameter, corresponds to the value under 
               which frequency components are assumed to be unwanted.
 
   output params (see equation 14 of the same paper):

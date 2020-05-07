@@ -114,7 +114,7 @@ def visualization( X ):
 
     fig, ax = plt.subplots()
     
-    ax.scatter( X[ 0 , : ] , X[ 1 , : ], s=10 ,alpha=0.5 )
+    ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 ,alpha=0.5 )
 
     ax.set_xlabel( r'$x_1$', fontsize=16 )
     ax.set_ylabel( r'$x_2$', fontsize=16 )
@@ -135,14 +135,15 @@ if __name__ == "__main__":
     mu_1 = annotations[ 'mu1' ]
     mu_2 = annotations[ 'mu2' ]
 
+    kernels = { 'K1' : ( S_1, mu_1 ) , 'K2' : ( S_2, mu_2 ) }
+
     # The data itself
     X = annotations[ 'X' ]
-
-    # Make a scatter plot for visualization
-    # visualization( X )
 
     # EM-Algorithm
     num_centers = 2
     Mu, Sigma = em_algorithm( X, num_centers, max_iter=100 )
 
-    # TODO: Visualization of GMM kernels
+    # Make a scatter plot for visualization
+    # visualization( X, Mu, Sigma,  )
+   

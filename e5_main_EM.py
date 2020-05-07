@@ -62,8 +62,8 @@ def em_algorithm( X, num_centers, max_iter ):
         num_centers ))
 
     # Sigma is the covariance matrix of dimension 2 x 2 x 2
-    # Sigma[ : , : , 0 ] -> 2 x 2 covariance matrix of cluster 1 with Mu 1
-    # Sigma[ : , : , 1 ] -> 2 x 2 covariance matrix of cluster 2 with Mu 2
+    # Sigma[ 0, : , : ] -> 2 x 2 covariance matrix of cluster 1 with Mu 1
+    # Sigma[ 1, : , : ] -> 2 x 2 covariance matrix of cluster 2 with Mu 2
     init_Sigma = np.random.uniform( low=-1, high=1, size=( num_components , 
         num_centers))
 

@@ -3,6 +3,90 @@
 
 import numpy as np
 
+# Lecture 7:-------------------------------------------------------------------
+
+def calc_fisher_ratio(x, y):
+  """
+  calculate the fisher ratio of each feature and each class
+  x: [n x m] n samples, m features
+  """
+
+  #  n samples, m features
+  n, m = x.shape
+
+  # amount of classes
+  labels = np.unique(y)
+  n_classes = len(labels)
+
+  # compare labels
+  compare_label = []
+
+  # get all labels to compare
+  for i in range(n_classes - 1):
+    for i_s in range(i + 1, n_classes):
+
+      # append to label compare list
+      compare_label.append(labels[i] + ' - ' + labels[i_s])
+
+  # init ratio
+  r = np.zeros((m, len(compare_label)))
+
+  # all features
+  for j in range(m):
+
+    # comparison class
+    c = 0
+
+    # all class compares
+    for i in range(n_classes - 1):
+
+      for i_s in range(i + 1, n_classes):
+
+        # calculate fisher ration 
+        r[j, c] = (np.mean(x[y==labels[i], j]) - np.mean(x[y==labels[i_s], j]))**2 / (np.var(x[y==labels[i], j]) + np.var(x[y==labels[i_s], j]) )
+        c += 1
+  
+  return r, compare_label
+
+
+def calc_dp(x, y):
+  """
+  calculate discriminance potential
+  """
+
+  # calculate scatter matrices
+  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x, y)
+
+  return np.trace(Sw) / np.trace(Sb)
+
+
+def feature_filter(x, y):
+  """
+  feature filter uses the filter approach to reduce feature dimensions
+  x: [n x m] n samples, m features
+  """
+
+  # get shape of things
+  n, m = x.shape
+
+  # TODO: implementation
+
+  return x, m
+
+
+def feature_wrapper(x, y):
+  """
+  feature wrapper uses the wrapper approach to reduce feature dimensions
+  x: [n x m] n samples, m features
+  """
+  # get shape of things
+  n, m = x.shape
+
+  # TODO: implementation
+
+  return x, m
+
+
 # Lecture 6:-------------------------------------------------------------------
 
 def lda_classify(x, w, bias, label_list):
@@ -21,10 +105,10 @@ def lda_classify(x, w, bias, label_list):
   return None
 
 
-def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
+def calc_class_scatter_matrices(x, y):
   """
-  train lda classifier, extract weights and bias vectors x:[n samples x m features]
-  return weights, biases, transformed data and label list
+  calculates the within-class scatter matrix Sw and
+  between-class scatter matrix Sb and Covariance matrix Cov_k
   """
 
   # n samples, m features
@@ -63,17 +147,34 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
 
 
   # calculate between class scatter matrix S_b [m x m]
-  S_b = np.einsum('k, km, kn -> mn', p_k, mu_k-mu, mu_k-mu)
+  Sb = np.einsum('k, km, kn -> mn', p_k, mu_k-mu, mu_k-mu)
 
   # calculate within class scatter matrix S_w [m x m]
-  S_w = np.einsum('k, kmn -> mn', p_k, cov_k)
+  Sw = np.einsum('k, kmn -> mn', p_k, cov_k)
 
+  return Sw, Sb, cov_k, label_list
+
+
+def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
+  """
+  train lda classifier, extract weights and bias vectors x:[n samples x m features]
+  return weights, biases, transformed data and label list
+  """
+
+  # n samples, m features
+  n, m = x.shape
+
+  # calculate scatter matrices
+  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x, y)
+
+  # number of classes
+  n_classes = len(label_list)
 
   # class independent method - standard: use S_w
   if method == 'class_independent':
 
     # compute eigenvector
-    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(S_w) @  S_b)
+    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(Sw) @  Sb)
     
     # real valued eigenvals [k-1 x m]
     w = eig_vec[:n_classes-1, :]
@@ -97,7 +198,7 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
     for k in range(n_classes):
 
       # compute eigenvector
-      eig_val, eig_vec = np.linalg.eig(np.linalg.inv(cov_k[k]) @  S_b)
+      eig_val, eig_vec = np.linalg.eig(np.linalg.inv(cov_k[k]) @  Sb)
 
       # use first eigenvector
       w[k] = eig_vec[:, :n_lda_dim].real
@@ -120,6 +221,7 @@ def compute_lambda( W, H, T, M, N ):
     Lambda += W[ :, :, t ] @ time_shift( H, t, axis=1 )
 
   return Lambda
+
 
 # Lecture 4:-------------------------------------------------------------------
 def time_shift( matrix, shift, axis=1 ):

@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 # sklearn imports for comparison
 from sklearn.cluster import KMeans
-from sklearn.mixture import GaussianMixture
 
 def compute_posterior( alpha, num_samples, num_components, num_centers, 
     X, Mu, Sigma ):
@@ -19,24 +18,26 @@ def compute_posterior( alpha, num_samples, num_components, num_centers,
     for k in range( num_centers ):
 
         # print info
-        print("\n--k: ", k)
-        print("mu k: \n", Mu[k, :])
-        print("Sigma k: \n", Sigma[k, :, :])
+        # print("\n--k: ", k)
+        # print("mu k: \n", Mu[k, :])
+        # print("Sigma k: \n", Sigma[k, :, :])
 
         # set distribution
         distribution = multivariate_normal( Mu[k, :], Sigma[ k, :, : ] )
 
         for n in range( num_samples ):
             
-            # calc probability
+            # calculate probability
             prob_xn_theta_k[ k , n ] = distribution.pdf( X[ :, n ] ) 
     
     # r is a 2 x 200 matrix. Each entry is the posterior probability of 
     # cluster k given xn = X[ : , n ] and mu_k = Mu[ : , k ] and 
-    # Sigma_k = Sigma[ : , : , k ]
+    # Sigma_k = Sigma[ k , : , : ]
     R = np.repeat( alpha , num_samples , axis=1 ) * prob_xn_theta_k
     R = R / np.sum( R , axis=0 )
 
+    # Line 41 and 42 make sure, that there are no invalid values 
+    # in th resulting matrix 
     R[ np.isnan(R) ] = 1e-3
     R[ R < 1e-3 ] = 1e-3
 
@@ -76,8 +77,6 @@ def em_algorithm( X, num_centers, max_iter ):
     # E-Step: Computing the posterior probabilities:---------------------------
     counter = 0
     while counter <= max_iter:
-
-        # print iteration
         print("\n---\niteration: ", counter)
 
         # E-Step: Expectation [k x n]
@@ -110,15 +109,54 @@ def em_algorithm( X, num_centers, max_iter ):
 
     return Mu, Sigma
 
-def visualization( X ):
+def visualization( X, Mu, Sigma, kernels, num_centers, max_iter ):
+    """ The visualization is adepted from the 
+    following code example respectively sources:
 
-    fig, ax = plt.subplots()
+    - https://bit.ly/3bc7Uil 
+    Gitlab respository were I worked on as well - Nico Seddiki
     
-    ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 ,alpha=0.5 )
+    - https://bit.ly/2WBlmHf:
+    Official documentation for multivariate_normal function.
+
+    """
+
+    # Initialize plots:--------------------------------------------------------
+    fig, ax = plt.subplots()
+    ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 , alpha=0.5 )
+
+    # number of points respectively data samples
+    nr_points = np.size( X[ 0, : ] )
+
+    # Boundaries for plot
+    ( xmin , xmax ) = ( -3 , 3 ) 
+    ( ymin , ymax ) = ( -3 , 3 )
+
+    delta_x = float( xmax - xmin ) / float( nr_points )
+    delta_y = float( ymax - ymin ) / float( nr_points )
+    x = np.arange( xmin, xmax, delta_x)
+    y = np.arange( ymin, ymax, delta_y)
+    
+    x1, x2 = np.meshgrid( x, y )
+
+    # Get reference mu for each cluster and plot it:---------------------------
+    for key in kernels.keys():
+        for center in range( num_centers ):
+            coordinates_mu = kernels[key]
+
+            ax.scatter( coordinates_mu[0], coordinates_mu[1], s=30,
+                alpha=0.5, color='red', marker='x', antialiased=True )
+
+            pos =  np.dstack( (x1, x2) )
+            x3  =  multivariate_normal.pdf( pos , 
+                Mu[center, :], Sigma[ center, :, : ] )
+
+            contour  = plt.contour( x1, x2, x3 )
 
     ax.set_xlabel( r'$x_1$', fontsize=16 )
     ax.set_ylabel( r'$x_2$', fontsize=16 )
-    ax.set_title( 'Test Data Set' )
+    ax.clabel( contour, inline=1, fontsize=10)
+    ax.set_title( 'EM-Clustering Technique: {} Iterations'.format( max_iter ))
 
     ax.grid( True )
     fig.tight_layout()
@@ -135,15 +173,18 @@ if __name__ == "__main__":
     mu_1 = annotations[ 'mu1' ]
     mu_2 = annotations[ 'mu2' ]
 
-    kernels = { 'K1' : ( S_1, mu_1 ) , 'K2' : ( S_2, mu_2 ) }
+    # Dictionary containing the cluster centers
+    kernels = { 'K1' : mu_1  , 'K2' : mu_2  }
 
     # The data itself
     X = annotations[ 'X' ]
 
     # EM-Algorithm
+    max_iter = [ 10, 25, 50, 75, 100 ]
     num_centers = 2
-    Mu, Sigma = em_algorithm( X, num_centers, max_iter=100 )
 
-    # Make a scatter plot for visualization
-    # visualization( X, Mu, Sigma,  )
+    # Full EM-Algorithm and plot
+    for i in max_iter:
+        Mu, Sigma = em_algorithm( X, num_centers, i )
+        visualization( X, Mu, Sigma, kernels, num_centers, i )
    

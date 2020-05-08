@@ -8,11 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 # sklearn imports for comparison
-<<<<<<< HEAD
 from sklearn.cluster import KMeans
-=======
-from sklearn.mixture import GaussianMixture
->>>>>>> 4cade9f570b771844d3083131d3583c75291cc69
 
 def compute_posterior( alpha, num_samples, num_components, num_centers, 
     X, Mu, Sigma ):
@@ -82,13 +78,7 @@ def em_algorithm( X, num_centers, max_iter ):
     # E-Step: Computing the posterior probabilities:---------------------------
     counter = 0
     while counter <= max_iter:
-<<<<<<< HEAD
         print("\n---\niteration: ", counter)
-=======
-
-        # print iteration
-        # print("\n---\niteration: ", counter)
->>>>>>> 4cade9f570b771844d3083131d3583c75291cc69
 
         # E-Step: Expectation [k x n]
         R = compute_posterior( alpha, num_samples, num_components, 
@@ -120,7 +110,6 @@ def em_algorithm( X, num_centers, max_iter ):
 
     return Mu, Sigma
 
-<<<<<<< HEAD
 def visualization( X, Mu, Sigma, kernels, num_centers, max_iter ):
     """ The visualization is adepted from the 
     following code example respectively sources:
@@ -134,17 +123,6 @@ def visualization( X, Mu, Sigma, kernels, num_centers, max_iter ):
     """
 
     # Initialize plots:--------------------------------------------------------
-=======
-def visualization( X, Mu, Sigma, kernels, num_centers ):
-    """ The visualization is adepted from the 
-    following code example:
-
-    https://bit.ly/3bc7Uil
-
-    """
-
-    # Initialize plots
->>>>>>> 4cade9f570b771844d3083131d3583c75291cc69
     fig, ax = plt.subplots()
     ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 , alpha=0.5 )
 
@@ -160,26 +138,15 @@ def visualization( X, Mu, Sigma, kernels, num_centers ):
     x = np.arange( xmin, xmax, delta_x)
     y = np.arange( ymin, ymax, delta_y)
     
-<<<<<<< HEAD
     x1, x2 = np.meshgrid( x, y )
 
     # Get reference mu for each cluster and plot it:---------------------------
-=======
-    x1, x2 = np.meshgrid(x, y)
-
-    # Get reference mu for each cluster and plot it
->>>>>>> 4cade9f570b771844d3083131d3583c75291cc69
     for key in kernels.keys():
         for center in range( num_centers ):
             coordinates_mu = kernels[key]
 
-<<<<<<< HEAD
             ax.scatter( coordinates_mu[0], coordinates_mu[1], s=30,
                 alpha=0.5, color='red', marker='x', antialiased=True )
-=======
-            ax.scatter( coordinates_mu[0], coordinates_mu[1], s=15,
-            alpha=0.5, color='red', marker='x', antialiased=True )
->>>>>>> 4cade9f570b771844d3083131d3583c75291cc69
 
             pos =  np.dstack( (x1, x2) )
             x3  =  multivariate_normal.pdf( pos , 
@@ -217,13 +184,8 @@ if __name__ == "__main__":
     max_iter = [ 10, 25, 50, 75, 100 ]
     num_centers = 2
 
-<<<<<<< HEAD
     # Full EM-Algorithm and plot
     for i in max_iter:
         Mu, Sigma = em_algorithm( X, num_centers, i )
         visualization( X, Mu, Sigma, kernels, num_centers, i )
-=======
-    # Make a scatter plot for visualization
-    visualization( X, Mu, Sigma, kernels, num_centers )
->>>>>>> 4cade9f570b771844d3083131d3583c75291cc69
    

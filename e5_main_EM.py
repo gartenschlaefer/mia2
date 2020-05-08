@@ -17,11 +17,10 @@ def compute_posterior( alpha, num_samples, num_components, num_centers,
 
     # computing the probabilities for each component
     for k in range( num_centers ):
-
-        # print info
-        # print("\n--k: ", k)
-        # print("mu k: \n", Mu[k, :])
-        # print("Sigma k: \n", Sigma[k, :, :])
+        #print info
+        print("\n--k: ", k)
+        print("mu k: \n", Mu[k, :])
+        print("Sigma k: \n", Sigma[k, :, :])
 
         # set distribution
         distribution = multivariate_normal( Mu[k, :], Sigma[ k, :, : ] )
@@ -167,6 +166,7 @@ def visualization( X, Mu, Sigma, kernels, num_centers, max_iter ):
 if __name__ == "__main__":
     annotations = loadmat( './ignore/ass5_data/EM_data.mat' )
     
+    # EM-Algorithm:------------------------------------------------------------
     # Covariance matrices and Mean vectors for cluster 1 and 2
     # For comparisions! Not needed for the EM-Algorithm
     S_1  = annotations[ 'S1' ]
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     X = annotations[ 'X' ]
 
     # EM-Algorithm
-    max_iter = [ 10, 25, 50, 75, 100 ]
+    max_iter = [ 1, 5, 10, 25, 50, 75, 100 ]
     num_centers = 2
 
     # Full EM-Algorithm and plot
@@ -189,3 +189,4 @@ if __name__ == "__main__":
         Mu, Sigma = em_algorithm( X, num_centers, i )
         visualization( X, Mu, Sigma, kernels, num_centers, i )
    
+   # KMeans-Algorithm:---------------------------------------------------------

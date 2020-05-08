@@ -4,10 +4,10 @@ import numpy as np
 from scipy.io import loadmat
 from scipy.stats import multivariate_normal
 
+import matplotlib 
 import matplotlib.pyplot as plt
 
 # sklearn imports for comparison
-from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
 def compute_posterior( alpha, num_samples, num_components, num_centers, 
@@ -19,9 +19,9 @@ def compute_posterior( alpha, num_samples, num_components, num_centers,
     for k in range( num_centers ):
 
         # print info
-        print("\n--k: ", k)
-        print("mu k: \n", Mu[k, :])
-        print("Sigma k: \n", Sigma[k, :, :])
+        # print("\n--k: ", k)
+        # print("mu k: \n", Mu[k, :])
+        # print("Sigma k: \n", Sigma[k, :, :])
 
         # set distribution
         distribution = multivariate_normal( Mu[k, :], Sigma[ k, :, : ] )
@@ -78,7 +78,7 @@ def em_algorithm( X, num_centers, max_iter ):
     while counter <= max_iter:
 
         # print iteration
-        print("\n---\niteration: ", counter)
+        # print("\n---\niteration: ", counter)
 
         # E-Step: Expectation [k x n]
         R = compute_posterior( alpha, num_samples, num_components, 
@@ -110,11 +110,45 @@ def em_algorithm( X, num_centers, max_iter ):
 
     return Mu, Sigma
 
-def visualization( X ):
+def visualization( X, Mu, Sigma, kernels, num_centers ):
+    """ The visualization is adepted from the 
+    following code example:
 
+    https://bit.ly/3bc7Uil
+
+    """
+
+    # Initialize plots
     fig, ax = plt.subplots()
+    ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 , alpha=0.5 )
+
+    # number of points respectively data samples
+    nr_points = np.size( X[ 0, : ] )
+
+    # Boundaries for plot
+    ( xmin , xmax ) = ( -3 , 3 ) 
+    ( ymin , ymax ) = ( -3 , 3 )
+
+    delta_x = float( xmax - xmin ) / float( nr_points )
+    delta_y = float( ymax - ymin ) / float( nr_points )
+    x = np.arange( xmin, xmax, delta_x)
+    y = np.arange( ymin, ymax, delta_y)
     
-    ax.scatter( X[ 0 , : ] , X[ 1 , : ] , s=10 ,alpha=0.5 )
+    x1, x2 = np.meshgrid(x, y)
+
+    # Get reference mu for each cluster and plot it
+    for key in kernels.keys():
+        for center in range( num_centers ):
+            coordinates_mu = kernels[key]
+
+            ax.scatter( coordinates_mu[0], coordinates_mu[1], s=15,
+            alpha=0.5, color='red', marker='x', antialiased=True )
+
+            pos =  np.dstack( (x1, x2) )
+            x3  =  multivariate_normal.pdf( pos , 
+                Mu[center, :], Sigma[ center, :, : ] )
+
+            contour  = plt.contour( x1, x2, x3 )
 
     ax.set_xlabel( r'$x_1$', fontsize=16 )
     ax.set_ylabel( r'$x_2$', fontsize=16 )
@@ -135,7 +169,8 @@ if __name__ == "__main__":
     mu_1 = annotations[ 'mu1' ]
     mu_2 = annotations[ 'mu2' ]
 
-    kernels = { 'K1' : ( S_1, mu_1 ) , 'K2' : ( S_2, mu_2 ) }
+    # Dictionary containing the cluster centers
+    kernels = { 'K1' : mu_1  , 'K2' : mu_2  }
 
     # The data itself
     X = annotations[ 'X' ]
@@ -145,5 +180,5 @@ if __name__ == "__main__":
     Mu, Sigma = em_algorithm( X, num_centers, max_iter=100 )
 
     # Make a scatter plot for visualization
-    # visualization( X, Mu, Sigma,  )
+    visualization( X, Mu, Sigma, kernels, num_centers )
    

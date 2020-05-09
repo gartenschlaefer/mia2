@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 # sklearn imports for comparison
 from sklearn.cluster import KMeans
 
+#------------------------------------------------------------------------------
 def compute_posterior( alpha, num_samples, num_components, num_centers, 
     X, Mu, Sigma ):
     
@@ -43,6 +44,7 @@ def compute_posterior( alpha, num_samples, num_components, num_centers,
 
     return R
 
+#------------------------------------------------------------------------------
 def em_algorithm( X, num_centers, max_iter ):
     
     #Initialization:-----------------------------------------------------------
@@ -109,8 +111,9 @@ def em_algorithm( X, num_centers, max_iter ):
 
     return Mu, Sigma
 
-def visualization( X, Mu, Sigma, kernels, num_centers, max_iter ):
-    """ The visualization is adepted from the 
+#------------------------------------------------------------------------------
+def visualization_gmm( X, Mu, Sigma, kernels, num_centers, max_iter ):
+    """ The visualization_gmm is adepted from the 
     following code example respectively sources:
 
     - https://bit.ly/3bc7Uil 
@@ -163,6 +166,26 @@ def visualization( X, Mu, Sigma, kernels, num_centers, max_iter ):
 
     plt.show()
 
+#------------------------------------------------------------------------------
+def visualization_kmeans( X_kmeans, labels, cluster_centers, max_iter ):
+
+    fig, ax = plt.subplots()
+    
+    ax.scatter( X_kmeans[:,0] , X_kmeans[:,1] , s=10 , alpha=0.5 , c=labels, 
+        cmap='viridis' )
+    ax.scatter( cluster_centers[: , 0], cluster_centers[: , 1], s=30,
+        alpha=0.5, color='red', marker='x', antialiased=True )
+    
+    ax.set_xlabel( r'$x_1$', fontsize=16 )
+    ax.set_ylabel( r'$x_2$', fontsize=16 )
+    ax.set_title('KMeans-Clustering Technique: {} Iterations'.format(max_iter))
+
+    ax.grid( True )
+    fig.tight_layout()
+
+    plt.show()
+
+#------------------------------------------------------------------------------
 if __name__ == "__main__":
     annotations = loadmat( './ignore/ass5_data/EM_data.mat' )
     
@@ -185,8 +208,20 @@ if __name__ == "__main__":
     num_centers = 2
 
     # Full EM-Algorithm and plot
-    for i in max_iter:
-        Mu, Sigma = em_algorithm( X, num_centers, i )
-        visualization( X, Mu, Sigma, kernels, num_centers, i )
+    # for i in max_iter:
+    #     Mu, Sigma = em_algorithm( X, num_centers, i )
+    #     visualization_gmm( X, Mu, Sigma, kernels, num_centers, i )
    
-   # KMeans-Algorithm:---------------------------------------------------------
+    # KMeans-Algorithm:--------------------------------------------------------
+    # The following is adapted and taken from the official sklearn 
+    # documentation:
+    # - https://bit.ly/35MREmP ,
+    # - https://bit.ly/35JYwl9 ,
+
+    X_kmeans = X.T
+    kmeans = KMeans( n_clusters=num_centers, init='k-means++', 
+        max_iter=max_iter[-1] )
+    kmeans.fit( X_kmeans )
+    
+    visualization_kmeans( X_kmeans, kmeans.labels_, kmeans.cluster_centers_,
+        kmeans.n_iter_ )

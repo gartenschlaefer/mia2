@@ -60,6 +60,87 @@ def calc_dp(x, y):
   return np.trace(Sw) / np.trace(Sb)
 
 
+def SBS_Search(x, y, start_features=None, depth=None):
+  """
+  Sequential backward search
+  """
+
+  # TODO: implementation
+  return None
+
+
+def SFS_Search(x, y, start_features=None, depth=None):
+  """
+  Sequential forward search
+  """
+
+  # get shape of things: n samples, m features
+  n, m = x.shape
+
+  # start with zero set [m x n]
+  x_h = np.empty(shape=(0, n), dtype=x.dtype)
+
+  # actual indices in x_h
+  act_mi = []
+
+  # selected start features if None -> empty set
+  if start_features is not None:
+
+    # start with selected feature set
+    x_h = x[:, start_features].T
+
+    # actual indices in x_h
+    act_mi = start_features
+
+
+  # TODO: change this to depths and include stop condition
+  for r in range(15):
+
+    # determine excluded feature indices
+    exc_mi = np.delete(np.arange(m), act_mi)
+
+    #print("excluded features: ", exc_mi)
+
+    # cost array
+    J = np.zeros(len(exc_mi)) 
+
+    # add excluded mi one by one
+    for i, emi in enumerate(exc_mi):
+
+      # append feature for trial
+      x_trial = np.vstack((x_h, x[:, emi]))
+
+      # calculate cost
+      J[i] = calc_dp(x_trial.T, y)
+
+      #print("added feature index: {} with dp: {}".format(emi, J[i]))
+
+    # determine best contribution feature
+    best_mi = exc_mi[np.argmax(J)]
+
+    # append best feature
+    x_h = np.vstack((x_h, x[:, best_mi]))
+
+    # actual feature index
+    act_mi.append(best_mi)
+
+    print("best feature index: {} \t with dp: {}".format(best_mi, J[np.argmax(J)]))
+
+
+  print("x_h: ", x_h.shape)
+
+  return x_h.T
+
+
+def LRS_search(x, y, L, R):
+  """
+  Plus L - R selection
+  """
+
+  # TODO: implementation
+  return None
+
+
 def feature_filter(x, y):
   """
   feature filter uses the filter approach to reduce feature dimensions
@@ -70,8 +151,12 @@ def feature_filter(x, y):
   n, m = x.shape
 
   # TODO: implementation
+  x_h = SFS_Search(x, y, start_features=None, depth=None)
 
-  return x, m
+  # amount of features
+  m_h = x_h.shape[1]
+
+  return x_h, m_h
 
 
 def feature_wrapper(x, y):

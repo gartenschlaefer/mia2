@@ -208,9 +208,9 @@ if __name__ == "__main__":
     num_centers = 2
 
     # Full EM-Algorithm and plot
-    # for i in max_iter:
-    #     Mu, Sigma = em_algorithm( X, num_centers, i )
-    #     visualization_gmm( X, Mu, Sigma, kernels, num_centers, i )
+    for i in max_iter:
+        Mu, Sigma = em_algorithm( X, num_centers, i )
+        visualization_gmm( X, Mu, Sigma, kernels, num_centers, i )
    
     # KMeans-Algorithm:--------------------------------------------------------
     # The following is adapted and taken from the official sklearn 

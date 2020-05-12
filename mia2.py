@@ -51,11 +51,15 @@ def calc_fisher_ratio(x, y):
 
 def calc_dp(x, y):
   """
-  calculate discriminance potential
+  calculate discriminance potential of lda transformed data
+  x: [n x m] n-samples, m-features
   """
 
+  # transform data points with lda
+  w, bias, x_h, label_list = train_lda_classifier(x, y)
+
   # calculate scatter matrices
-  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x, y)
+  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x_h.T, y)
 
   return np.trace(Sw) / np.trace(Sb)
 
@@ -80,8 +84,8 @@ def SFS_Search(x, y, start_features=None, depth=None):
   # start with zero set [m x n]
   x_h = np.empty(shape=(0, n), dtype=x.dtype)
 
-  # actual indices in x_h
-  act_mi = []
+  # dp_list, actual indices list
+  dp_m, act_mi = [], []
 
   # selected start features if None -> empty set
   if start_features is not None:
@@ -94,7 +98,7 @@ def SFS_Search(x, y, start_features=None, depth=None):
 
 
   # TODO: change this to depths and include stop condition
-  for r in range(15):
+  for r in range(45):
 
     # determine excluded feature indices
     exc_mi = np.delete(np.arange(m), act_mi)
@@ -121,15 +125,19 @@ def SFS_Search(x, y, start_features=None, depth=None):
     # append best feature
     x_h = np.vstack((x_h, x[:, best_mi]))
 
-    # actual feature index
+    # actual feature index added
     act_mi.append(best_mi)
+    
+    # discriminance potential for set of features
+    dp_m.append(J[np.argmax(J)])
 
-    print("best feature index: {} \t with dp: {}".format(best_mi, J[np.argmax(J)]))
+    print("total feat: {}, best feature index: {} \t with dp: {}".format(r, act_mi[r], dp_m[r]))
 
 
   print("x_h: ", x_h.shape)
+  print("act_mi: ", act_mi)
 
-  return x_h.T
+  return x_h.T, act_mi, dp_m
 
 
 def LRS_search(x, y, L, R):
@@ -151,12 +159,9 @@ def feature_filter(x, y):
   n, m = x.shape
 
   # TODO: implementation
-  x_h = SFS_Search(x, y, start_features=None, depth=None)
-
-  # amount of features
-  m_h = x_h.shape[1]
-
-  return x_h, m_h
+  x_h, act_mi, dp_m = SFS_Search(x, y, start_features=None, depth=None)
+  
+  return x_h, act_mi, dp_m
 
 
 def feature_wrapper(x, y):
@@ -168,8 +173,9 @@ def feature_wrapper(x, y):
   n, m = x.shape
 
   # TODO: implementation
+  act_mi = np.arange(m)
 
-  return x, m
+  return x, act_mi
 
 
 # Lecture 6:-------------------------------------------------------------------
@@ -260,12 +266,12 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
 
     # compute eigenvector
     eig_val, eig_vec = np.linalg.eig(np.linalg.inv(Sw) @  Sb)
-    
-    # real valued eigenvals [k-1 x m]
-    w = eig_vec[:n_classes-1, :]
+        
+    # real valued eigenvals [m x k-1]
+    w = eig_vec[:, :n_classes-1].real
 
     # transformed data [k-1 x n] = [k-1 x m] @ [m x n]
-    x_h = w @ x.T
+    x_h = w.T @ x.T
 
     # bias [k-1]
     bias = np.mean(x_h, axis=1)

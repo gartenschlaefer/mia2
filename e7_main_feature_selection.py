@@ -44,21 +44,25 @@ if __name__ == "__main__":
     #
     # Are 3 features enough?
 
-    # check discriminance potential
-    dp = calc_dp(x, y)
-
     # fisher ratio
     # r, l = calc_fisher_ratio(x, y)
     # print("fisher: ", r)
     # print("fisher: ", r.shape)
     # print("labels: ", l)
 
-
-    print("\nfull set of features m={} has dp: {}".format(m, dp))
+    # check discriminance potential
+    print("\nfull set of features m={} has dp: {}".format(m, calc_dp(x, y)))
 
 
     # TODO: filter approach -> mia2 lib
-    x_filter, m_f = feature_filter(x, y)
+    x_filter, m_f, dp_m = feature_filter(x, y)
+
+    # dp:
+    plt.figure()
+    plt.stem(dp_m)
+    plt.ylabel("dp")
+    plt.xlabel("amount of features")
+    plt.show()
 
 
     # TODO: wrapper approach (Nico) -> mia2 lib
@@ -70,8 +74,8 @@ if __name__ == "__main__":
     dp_w = calc_dp(x_wrapper, y)
 
     # some prints
-    print("\nfeature filter m={} has dp: {}".format(m_f, dp_f))
-    print("\nfeature wrapper m={} has dp: {}".format(m_w, dp_w))
+    print("\nfeature filter m={} has dp: {}".format(len(m_f), dp_f))
+    print("\nfeature wrapper m={} has dp: {}\n".format(len(m_w), dp_w))
 
 
    

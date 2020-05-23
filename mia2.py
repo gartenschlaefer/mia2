@@ -5,6 +5,237 @@ import numpy as np
 
 # Lecture 7:-------------------------------------------------------------------
 
+def calc_dp(x, y):
+  """
+  calculate discriminance potential of lda transformed data
+  x: [n x m] n-samples, m-features
+  """
+
+  # transform data points with lda
+  w, bias, x_h, label_list = train_lda_classifier(x, y)
+
+  # calculate scatter matrices
+  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x_h.T, y)
+
+  # return dp
+  return np.trace(Sb) / np.trace(Sw)
+
+
+def SFS_Search(x, y, start_features=None, depth=None):
+  """
+  Sequential forward search
+  """
+
+  # get shape of things: n samples, m features
+  n, m = x.shape
+
+  # limit for search
+  if depth is None:
+    depth = m
+
+  # start with zero set [m x n]
+  x_h = np.empty(shape=(0, n), dtype=x.dtype)
+
+  # dp_list, actual indices list
+  dp_m, act_mi = np.array([]), []
+
+  # selected start features if None -> empty set
+  if start_features is not None:
+
+    # start with selected feature set
+    x_h = x[:, start_features].T
+
+    # actual indices in x_h
+    act_mi = start_features
+
+
+  # TODO: include stop condition
+  for r in range(depth):
+
+    # determine excluded feature indices
+    exc_mi = np.delete(np.arange(m), act_mi)
+
+    # cost array
+    J = np.zeros(len(exc_mi)) 
+
+    # add excluded mi one by one
+    for i, emi in enumerate(exc_mi):
+
+      # append feature for trial
+      x_trial = np.vstack((x_h, x[:, emi]))
+
+      # calculate cost
+      J[i] = calc_dp(x_trial.T, y)
+
+      #print("added feature index: {} with dp: {}".format(emi, J[i]))
+
+    # determine best contribution feature
+    best_mi = exc_mi[np.argmax(J)]
+
+    # append best feature
+    x_h = np.vstack((x_h, x[:, best_mi]))
+
+    # actual feature index added
+    act_mi = np.append(act_mi, best_mi).astype(int)
+    
+    # discriminance potential for set of features
+    #dp_m.append(J[np.argmax(J)])
+    dp_m = np.append(dp_m, J[np.argmax(J)])
+
+    # print message
+    print("total feat: {}, best feature index: {} with dp: {}".format(r+1, act_mi[r], dp_m[r]))
+
+  return x_h.T, act_mi, dp_m
+
+
+def SBS_Search(x, y, start_features=None, depth=None):
+  """
+  Sequential backward search
+  """
+
+  # get shape of things: n samples, m features
+  n, m = x.shape
+
+  # limit for search
+  if depth is None:
+    depth = m // 2
+
+  # start with full set [m x n]
+  x_h = x
+
+  # dp_list, actual indices list
+  dp_m, act_mi = np.array([]), np.arange(m)
+
+  # selected start features if None -> empty set
+  if start_features is not None:
+
+    # start with selected feature set
+    x_h = x[:, start_features]
+
+    # actual indices in x_h
+    act_mi = start_features
+
+
+  # TODO: include stop condition
+  for r in range(depth):
+
+    # cost array
+    J = np.zeros(len(act_mi))
+
+    # add excluded mi one by one
+    for i, mi in enumerate(act_mi):
+
+      # remove index
+      x_trial = np.delete(x_h, i, axis=1)
+
+      # calculate cost
+      J[i] = calc_dp(x_trial, y)
+
+      #print("deleted feature index: {} with dp: {}".format(mi, J[i]))
+
+    # determine worst contribution feature
+    worst_mi = act_mi[np.argmin(J)]
+
+    # delete worst feature
+    x_h = np.delete(x_h, np.argmax(J), axis=1)
+    act_mi = np.delete(act_mi, np.argmax(J))
+
+    # discriminance potential for set of features
+    dp_m = np.append(dp_m, J[np.argmax(J)])
+
+    # print message
+    print("total feat: {}, worst feature index: {} with dp: {}".format(m-r+1, worst_mi, dp_m[r]))
+
+  return x_h, act_mi, dp_m
+
+
+def LRS_search(x, y, L, R, max_it=1):
+  """
+  Plus L - R selection
+  """
+
+  # TODO: add stopping condition
+
+  # dp score
+  dp_score = np.array([])
+
+  # inti actual feature indices
+  act_mi = None
+
+  # run trough all iterations
+  for it in range(max_it):
+
+    # start with backward search
+    if R > L:
+
+      # backward search R times
+      x_h, act_mi, dp_m1 = SBS_Search(x, y, start_features=act_mi, depth=R)
+
+      print("actual features: ", act_mi)
+
+      # forward search L times
+      x_h, act_mi, dp_m2 = SFS_Search(x, y, start_features=act_mi, depth=L)
+
+
+    # start with forward search
+    else:
+
+      # forward search L times
+      x_h, act_mi, dp_m1 = SFS_Search(x, y, start_features=act_mi, depth=L)
+
+      print("actual features: ", act_mi)
+
+      # backward search R times
+      x_h, act_mi, dp_m2 = SBS_Search(x, y, start_features=act_mi, depth=R)
+
+    # append to score
+    dp_score = np.concatenate((dp_score, dp_m1, dp_m2))
+
+  return x_h, act_mi, dp_score
+
+
+def feature_filter(x, y, algorithm='sfs'):
+  """
+  feature filter uses the filter approach to reduce feature dimensions
+  x: [n x m] n samples, m features
+  choose algorithm: 
+    sfs - forward search
+    sbs - backward search
+    lrs - left/right search
+  """
+
+  # get shape of things
+  n, m = x.shape
+
+  # forward search
+  if algorithm == 'sfs':
+    x_h, act_mi, dp_m = SFS_Search(x, y, start_features=None, depth=None)
+
+  # backward search
+  elif algorithm == 'sbs':
+    x_h, act_mi, dp_m = SBS_Search(x, y, start_features=None, depth=m-1)
+
+  # left, right search
+  else:
+    x_h, act_mi, dp_m = LRS_search(x, y, L=10, R=5, max_it=5)
+  
+  return x_h, act_mi, dp_m
+
+
+def feature_wrapper(x, y):
+  """
+  feature wrapper uses the wrapper approach to reduce feature dimensions
+  x: [n x m] n samples, m features
+  """
+  # get shape of things
+  n, m = x.shape
+
+  # TODO: implementation
+  act_mi = np.arange(m)
+
+  return x, act_mi
+
+
 def calc_fisher_ratio(x, y):
   """
   calculate the fisher ratio of each feature and each class
@@ -47,135 +278,6 @@ def calc_fisher_ratio(x, y):
         c += 1
   
   return r, compare_label
-
-
-def calc_dp(x, y):
-  """
-  calculate discriminance potential of lda transformed data
-  x: [n x m] n-samples, m-features
-  """
-
-  # transform data points with lda
-  w, bias, x_h, label_list = train_lda_classifier(x, y)
-
-  # calculate scatter matrices
-  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x_h.T, y)
-
-  return np.trace(Sw) / np.trace(Sb)
-
-
-def SBS_Search(x, y, start_features=None, depth=None):
-  """
-  Sequential backward search
-  """
-
-  # TODO: implementation
-  return None
-
-
-def SFS_Search(x, y, start_features=None, depth=None):
-  """
-  Sequential forward search
-  """
-
-  # get shape of things: n samples, m features
-  n, m = x.shape
-
-  # start with zero set [m x n]
-  x_h = np.empty(shape=(0, n), dtype=x.dtype)
-
-  # dp_list, actual indices list
-  dp_m, act_mi = [], []
-
-  # selected start features if None -> empty set
-  if start_features is not None:
-
-    # start with selected feature set
-    x_h = x[:, start_features].T
-
-    # actual indices in x_h
-    act_mi = start_features
-
-
-  # TODO: change this to depths and include stop condition
-  for r in range(45):
-
-    # determine excluded feature indices
-    exc_mi = np.delete(np.arange(m), act_mi)
-
-    #print("excluded features: ", exc_mi)
-
-    # cost array
-    J = np.zeros(len(exc_mi)) 
-
-    # add excluded mi one by one
-    for i, emi in enumerate(exc_mi):
-
-      # append feature for trial
-      x_trial = np.vstack((x_h, x[:, emi]))
-
-      # calculate cost
-      J[i] = calc_dp(x_trial.T, y)
-
-      #print("added feature index: {} with dp: {}".format(emi, J[i]))
-
-    # determine best contribution feature
-    best_mi = exc_mi[np.argmax(J)]
-
-    # append best feature
-    x_h = np.vstack((x_h, x[:, best_mi]))
-
-    # actual feature index added
-    act_mi.append(best_mi)
-    
-    # discriminance potential for set of features
-    dp_m.append(J[np.argmax(J)])
-
-    print("total feat: {}, best feature index: {} \t with dp: {}".format(r, act_mi[r], dp_m[r]))
-
-
-  print("x_h: ", x_h.shape)
-  print("act_mi: ", act_mi)
-
-  return x_h.T, act_mi, dp_m
-
-
-def LRS_search(x, y, L, R):
-  """
-  Plus L - R selection
-  """
-
-  # TODO: implementation
-  return None
-
-
-def feature_filter(x, y):
-  """
-  feature filter uses the filter approach to reduce feature dimensions
-  x: [n x m] n samples, m features
-  """
-
-  # get shape of things
-  n, m = x.shape
-
-  # TODO: implementation
-  x_h, act_mi, dp_m = SFS_Search(x, y, start_features=None, depth=None)
-  
-  return x_h, act_mi, dp_m
-
-
-def feature_wrapper(x, y):
-  """
-  feature wrapper uses the wrapper approach to reduce feature dimensions
-  x: [n x m] n samples, m features
-  """
-  # get shape of things
-  n, m = x.shape
-
-  # TODO: implementation
-  act_mi = np.arange(m)
-
-  return x, act_mi
 
 
 # Lecture 6:-------------------------------------------------------------------

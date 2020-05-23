@@ -55,15 +55,9 @@ if __name__ == "__main__":
 
 
     # TODO: filter approach -> mia2 lib
-    x_filter, m_f, dp_m = feature_filter(x, y)
-
-    # dp:
-    plt.figure()
-    plt.stem(dp_m)
-    plt.ylabel("dp")
-    plt.xlabel("amount of features")
-    plt.show()
-
+    #x_filter, m_f, dp_m = feature_filter(x, y, algorithm='sfs')
+    #x_filter, m_f, dp_m = feature_filter(x, y, algorithm='sbs')
+    x_filter, m_f, dp_m = feature_filter(x, y, algorithm='lrs')
 
     # TODO: wrapper approach (Nico) -> mia2 lib
     x_wrapper, m_w = feature_wrapper(x, y)
@@ -73,9 +67,20 @@ if __name__ == "__main__":
     dp_f = calc_dp(x_filter, y)
     dp_w = calc_dp(x_wrapper, y)
 
+    # print selected features
+    print("\nActual features by filter approach: \n", m_f)
+
     # some prints
     print("\nfeature filter m={} has dp: {}".format(len(m_f), dp_f))
     print("\nfeature wrapper m={} has dp: {}\n".format(len(m_w), dp_w))
+
+
+    # plot dp
+    plt.figure()
+    plt.stem(dp_m, use_line_collection=True)
+    plt.ylabel("dp")
+    plt.xlabel("search iteration")
+    plt.show()
 
 
    

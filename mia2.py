@@ -162,6 +162,8 @@ def LRS_search(x, y, L, R, max_it=1):
   # inti actual feature indices
   act_mi = None
 
+  lr_labels = np.array([])
+
   # run trough all iterations
   for it in range(max_it):
 
@@ -171,10 +173,11 @@ def LRS_search(x, y, L, R, max_it=1):
       # backward search R times
       x_h, act_mi, dp_m1 = SBS_Search(x, y, start_features=act_mi, depth=R)
 
-      print("actual features: ", act_mi)
-
       # forward search L times
       x_h, act_mi, dp_m2 = SFS_Search(x, y, start_features=act_mi, depth=L)
+
+      # add labels
+      lr_labels = np.concatenate((lr_labels, np.ones(R), np.zeros(L)))
 
 
     # start with forward search
@@ -183,18 +186,19 @@ def LRS_search(x, y, L, R, max_it=1):
       # forward search L times
       x_h, act_mi, dp_m1 = SFS_Search(x, y, start_features=act_mi, depth=L)
 
-      print("actual features: ", act_mi)
-
       # backward search R times
       x_h, act_mi, dp_m2 = SBS_Search(x, y, start_features=act_mi, depth=R)
+
+      # add labels
+      lr_labels = np.concatenate((lr_labels, np.zeros(L), np.ones(R)))
 
     # append to score
     dp_score = np.concatenate((dp_score, dp_m1, dp_m2))
 
-  return x_h, act_mi, dp_score
+  return x_h, act_mi, dp_score, lr_labels
 
 
-def feature_filter(x, y, algorithm='sfs'):
+def feature_filter(x, y, algorithm='SFS', L=2, R=1, max_it=2):
   """
   feature filter uses the filter approach to reduce feature dimensions
   x: [n x m] n samples, m features
@@ -207,19 +211,22 @@ def feature_filter(x, y, algorithm='sfs'):
   # get shape of things
   n, m = x.shape
 
+  # labels for search
+  lr_labels = None
+
   # forward search
-  if algorithm == 'sfs':
+  if algorithm == 'SFS':
     x_h, act_mi, dp_m = SFS_Search(x, y, start_features=None, depth=None)
 
   # backward search
-  elif algorithm == 'sbs':
+  elif algorithm == 'SBS':
     x_h, act_mi, dp_m = SBS_Search(x, y, start_features=None, depth=m-1)
 
   # left, right search
   else:
-    x_h, act_mi, dp_m = LRS_search(x, y, L=10, R=5, max_it=5)
+    x_h, act_mi, dp_m, lr_labels = LRS_search(x, y, L=L, R=R, max_it=max_it)
   
-  return x_h, act_mi, dp_m
+  return x_h, act_mi, dp_m, lr_labels
 
 
 def feature_wrapper(x, y):

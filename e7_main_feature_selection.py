@@ -10,6 +10,38 @@ from scipy.io import loadmat
 from mia2 import calc_dp, calc_fisher_ratio, feature_filter, feature_wrapper
 
 
+def plot_dp(dp_m, lr_labels, algorithm, L, R, max_it):
+    """
+    plot discriminance potential
+    """
+
+    it = np.arange(len(dp_m))
+
+    # plot dp
+    plt.figure()
+
+    if lr_labels is not None:
+        plt.stem(it[lr_labels==0], dp_m[lr_labels==0], use_line_collection=True)
+
+        ml, sl, bl = plt.stem(it[lr_labels==1], dp_m[lr_labels==1], use_line_collection=True)
+        plt.setp(ml, color='red')
+        plt.setp(sl, color='red')
+
+    else:
+        ml, sl, bl = plt.stem(it, dp_m, use_line_collection=True)
+        if algorithm == 'SBS':
+            plt.setp(ml, color='red')
+            plt.setp(sl, color='red')
+
+    plt.ylim(top=3.5)
+    plt.ylabel("dp")
+    plt.xlabel("search iteration")
+
+    # save
+    plt.savefig('./dp_' + 'algo-' + algorithm + '_L-' + str(L) + '_R-' + str(R) + 'max_it-' + str(max_it) + '.png', dpi=150)
+
+
+
 if __name__ == "__main__":
     """
     main function of feature selection
@@ -50,36 +82,43 @@ if __name__ == "__main__":
     # print("fisher: ", r.shape)
     # print("labels: ", l)
 
-    # check discriminance potential
-    print("\nfull set of features m={} has dp: {}".format(m, calc_dp(x, y)))
+    # all algorithms
+    algorithms = ['SFS', 'SBS', 'LRS']
 
+    # params
+    max_it = 5
+    L, R = 5, 10
 
-    # TODO: filter approach -> mia2 lib
-    #x_filter, m_f, dp_m = feature_filter(x, y, algorithm='sfs')
-    #x_filter, m_f, dp_m = feature_filter(x, y, algorithm='sbs')
-    x_filter, m_f, dp_m = feature_filter(x, y, algorithm='lrs')
+    # choose algorithm
+    algorithm = algorithms[2]
+
+    # filter approach (discriminance potential)
+    x_filter, m_f, dp_m, lr_labels = feature_filter(x, y, algorithm=algorithm, L=L, R=R, max_it=max_it)
 
     # TODO: wrapper approach (Nico) -> mia2 lib
     x_wrapper, m_w = feature_wrapper(x, y)
 
-
     # calc discriminance potential
     dp_f = calc_dp(x_filter, y)
-    dp_w = calc_dp(x_wrapper, y)
+    #dp_w = calc_dp(x_wrapper, y)
+
+
+    # check discriminance potential
+    print("\nfull set of features m={} has dp: {}".format(m, calc_dp(x, y)))
 
     # print selected features
     print("\nActual features by filter approach: \n", m_f)
 
     # some prints
     print("\nfeature filter m={} has dp: {}".format(len(m_f), dp_f))
-    print("\nfeature wrapper m={} has dp: {}\n".format(len(m_w), dp_w))
+    #print("\nfeature wrapper m={} has dp: {}\n".format(len(m_w), dp_w))
 
 
-    # plot dp
-    plt.figure()
-    plt.stem(dp_m, use_line_collection=True)
-    plt.ylabel("dp")
-    plt.xlabel("search iteration")
+    # some plots
+
+    plot_dp(dp_m, lr_labels, algorithm, L, R, max_it)
+
+    # show plots
     plt.show()
 
 

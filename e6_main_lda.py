@@ -12,7 +12,6 @@ from sklearn.metrics import confusion_matrix
 # mia2 lib
 from mia2 import calc_pca, train_lda_classifier, lda_classify
 
-
 def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	"""
 	visualization of iris data, adapted from
@@ -60,7 +59,6 @@ def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	if plot:
 		plt.savefig(plot_path + name + '_pca.png', dpi=150)
 
-
 def plot_transformed_data(x, y, plot_path, name, plot=False):
 	"""
 	plot transformed data lda data points
@@ -77,7 +75,6 @@ def plot_transformed_data(x, y, plot_path, name, plot=False):
 
 	if plot:
 		plt.savefig(plot_path + name + '.png', dpi=150)
-
 
 #------------------------------------------------------------------------------
 # Main function
@@ -125,14 +122,14 @@ if __name__ == '__main__':
 	# TODO: classify new samples (or the same ones) -> in mia lib
 	y_hat = lda_classify(x, w, bias, label_list)
 
+	# plt.scatter( y_hat[ 0, : ], y_hat[ 1, : ] )
 
 	# TODO: Visualization of new data points compared to transformed data above
 
 
 	# TODO: confusion matrix check
-	#cm = confusion_matrix(y, y_hat)
-	#print("confusion matrix:\n", cm)
-
+	# cm = confusion_matrix(y, y_hat)
+	# print("confusion matrix:\n", cm)
 
 	# TODO: (maybe nice) calculate accuracies
 

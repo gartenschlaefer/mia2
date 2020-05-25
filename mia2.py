@@ -288,7 +288,6 @@ def calc_fisher_ratio(x, y):
 
 
 # Lecture 6:-------------------------------------------------------------------
-
 def lda_classify(x, w, bias, label_list):
   """
   classification with lda classifier using weights and bias
@@ -301,6 +300,7 @@ def lda_classify(x, w, bias, label_list):
   """
 
   # TODO: implementation
+  pass
 
   return None
 
@@ -313,13 +313,14 @@ def calc_class_scatter_matrices(x, y):
 
   # n samples, m features
   n, m = x.shape
-
+  
   # labels and classes
-  labels = np.unique(y)
-  n_classes = len(labels)
+  labels = np.unique( y )
+
+  n_classes = len( labels )
 
   # overall mean [m]
-  mu = np.mean(x, axis=0)
+  mu = np.mean( x, axis=0 )
 
   # init statistics
   p_k, mu_k, cov_k = np.zeros(n_classes), np.zeros((n_classes, m)), np.zeros((n_classes, m, m))
@@ -328,23 +329,22 @@ def calc_class_scatter_matrices(x, y):
   label_list = []
 
   # calculate statistics from samples for further processing
-  for k, label in enumerate(labels):
+  for k, label in enumerate( labels ):
 
     # append label
-    label_list.append(label)
+    label_list.append( label )
 
     # get class samples
-    class_samples = x[y==label, :]
+    class_samples = x[ y==label, : ]
 
     # class occurrence probability [k]
-    p_k[k] = len(class_samples) / n
+    p_k[ k ] = len(class_samples) / n
 
     # mean vector of classes [k x m]
-    mu_k[k] = np.mean(class_samples, axis=0)
+    mu_k[ k ] = np.mean( class_samples, axis=0 )
 
     # covariance matrix of classes [k x m x m]
-    cov_k[k] = np.cov(class_samples, rowvar=False)
-
+    cov_k[ k ] = np.cov( class_samples, rowvar=False )
 
   # calculate between class scatter matrix S_b [m x m]
   Sb = np.einsum('k, km, kn -> mn', p_k, mu_k-mu, mu_k-mu)
@@ -352,7 +352,7 @@ def calc_class_scatter_matrices(x, y):
   # calculate within class scatter matrix S_w [m x m]
   Sw = np.einsum('k, kmn -> mn', p_k, cov_k)
 
-  return Sw, Sb, cov_k, label_list
+  return Sw, Sb, cov_k, label_list, p_k
 
 
 def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
@@ -365,26 +365,29 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
   n, m = x.shape
 
   # calculate scatter matrices
-  Sw, Sb, cov_k, label_list = calc_class_scatter_matrices(x, y)
+  Sw, Sb, cov_k, label_list, p_k = calc_class_scatter_matrices(x, y)
 
   # number of classes
-  n_classes = len(label_list)
+  n_classes = len( label_list )
 
   # class independent method - standard: use S_w
   if method == 'class_independent':
 
     # compute eigenvector
-    eig_val, eig_vec = np.linalg.eig(np.linalg.inv(Sw) @  Sb)
-        
+    eig_val, eig_vec = np.linalg.eig( np.linalg.inv(Sw) @  Sb ) 
+
     # real valued eigenvals [m x k-1]
-    w = eig_vec[:, :n_classes-1].real
+    w = eig_vec[ : , : n_classes - 1 ].real
 
     # transformed data [k-1 x n] = [k-1 x m] @ [m x n]
     x_h = w.T @ x.T
 
     # bias [k-1]
-    bias = np.mean(x_h, axis=1)
+    lda_coeffs = np.einsum( 'k, kmn -> mn', p_k, cov_k )
+    print( lda_coeffs )
 
+    bias = np.mean(x_h, axis=1)
+    print( 'bias: {}'.format( bias ))
 
   # class dependent use covariance instead of S_w
   elif method == 'class_dependent':
@@ -398,13 +401,13 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
     for k in range(n_classes):
 
       # compute eigenvector
-      eig_val, eig_vec = np.linalg.eig(np.linalg.inv(cov_k[k]) @  Sb)
+      eig_val, eig_vec = np.linalg.eig( np.linalg.inv(cov_k[k]) @ Sb )
 
       # use first eigenvector
-      w[k] = eig_vec[:, :n_lda_dim].real
+      w[ k ] = eig_vec[ :, : n_lda_dim ].real
 
       # transformed data
-      x_h[y==label_list[k]] = (w[k].T @ x[y==label_list[k]].T).T
+      x_h[ y == label_list[k] ] = ( w[k].T @ x[ y == label_list[k] ].T ).T
 
       # bias
       bias[k] = np.mean(x_h[y==label_list[k]])
@@ -583,6 +586,7 @@ def non_linear_mapping( u=1, alpha=15, beta=0.5 ):
   u_bar =  u / (1 + np.exp( -alpha * (u / u_max - beta )))
 
   return u_bar
+
 
 # Lecture 2:-------------------------------------------------------------------
 def matrix_otsu_thresh(R, lower_bound=0.5):

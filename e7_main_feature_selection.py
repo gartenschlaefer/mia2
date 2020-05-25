@@ -95,13 +95,10 @@ if __name__ == "__main__":
     # filter approach (discriminance potential)
     x_filter, m_f, dp_m, lr_labels = feature_filter(x, y, algorithm=algorithm, L=L, R=R, max_it=max_it)
 
-    # TODO: wrapper approach (Nico) -> mia2 lib
-    x_wrapper, m_w = feature_wrapper(x, y)
 
     # calc discriminance potential
     dp_f = calc_dp(x_filter, y)
-    #dp_w = calc_dp(x_wrapper, y)
-
+    
 
     # check discriminance potential
     print("\nfull set of features m={} has dp: {}".format(m, calc_dp(x, y)))

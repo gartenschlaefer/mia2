@@ -70,6 +70,7 @@ def plot_transformed_data(x, y, plot_path, name, plot=False):
 	plt.ylabel('lda component 2')
 	plt.xlim(x[0].min() - .5, x[0].max() + .5)
 	plt.ylim(x[1].min() - .5, x[1].max() + .5)
+	plt.grid( True )
 	#plt.xticks(())
 	#plt.yticks(())
 
@@ -116,12 +117,11 @@ if __name__ == '__main__':
 	print("transformed data: ", x_h.shape)
 
 	# plot transformed data x_h = [k-1, n]
-	plot_transformed_data(x_h, y, plot_path, name='lda_transformed', plot=False)
+	plot_transformed_data( x_h, y, plot_path, name='lda_transformed', plot=False )
 
 
 	# TODO: classify new samples (or the same ones) -> in mia lib
-	y_hat = lda_classify(x, w, bias, label_list)
-
+	# y_hat = lda_classify( x, w, bias, label_list)
 	# plt.scatter( y_hat[ 0, : ], y_hat[ 1, : ] )
 
 	# TODO: Visualization of new data points compared to transformed data above

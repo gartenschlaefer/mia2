@@ -3,6 +3,35 @@
 
 import numpy as np
 
+# Lecture 8:-------------------------------------------------------------------
+
+def f_to_midi_scale(f):
+  """
+  convert frequency to midi scale
+  """
+  return 12 * np.log2( f / 440 ) + 69
+
+
+def create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4):
+  """
+  create half-tone filterbank
+  """
+
+  # midi notes
+  p = np.arange(midi_start_note, midi_start_note + 12 * num_oct)
+
+  # midi notes of discrete DFT-bins
+  p_fk = np.insert( f_to_midi_scale(np.arange(1, N/2) * fs / N), 0, 0)
+
+  # differences
+  d = np.abs(p[:, np.newaxis] - p_fk)
+
+  # half-tone filterbank
+  Hp = 0.5 * np.tanh(np.pi * (1 - 2 * d)) + 0.5
+
+  return Hp
+
+
 # Lecture 7:-------------------------------------------------------------------
 
 def calc_dp(x, y):

@@ -31,6 +31,31 @@ def create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4):
 
   return Hp
 
+def calc_pitch_gram( hp, x, n ):
+  """ 
+  - Needs buffered input signal.
+  - Length of a segment.
+  - perform FFT and take the absolute value 
+  fft( signal[ 1:lenght(signal) / 2 + 1, : ] ) 
+
+  - Only half of the blocks are needed due to the symmetry of the fft
+  of a real valued signal.
+
+  The pitchgramm itself is the transformed signal multiplicated 
+  with the halftone filter bank.
+
+  """
+
+  ol = 0
+  
+  x_buff = buffer( x, n, ol=0 )
+  x_buff_win = x_buff * np.hanning( n )
+
+  X_buff_win = np.abs( np.fft( x_buff_win, n ))
+  X_buff_win = x_buff_win[  ]
+
+
+  pass
 
 # Lecture 7:-------------------------------------------------------------------
 

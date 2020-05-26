@@ -59,15 +59,19 @@ def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	if plot:
 		plt.savefig(plot_path + name + '_pca.png', dpi=150)
 
-def plot_transformed_data(x, y, plot_path, name, plot=False):
+def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 	"""
 	plot transformed data lda data points
 	"""
 
-	plt.figure(figsize=(8, 6))
-	plt.scatter(x[0], x[1], c=y, cmap=plt.cm.Set1, edgecolor='k')
+	plt.figure( figsize=(8, 6) )
+	plt.scatter( x[0], x[1], c=y, cmap=plt.cm.Set1, edgecolor='k' )
+	plt.scatter( mu_k_h[ 0 , : ], mu_k_h[ 1 , : ], color='k', marker='x', 
+		antialiased=True )
+	
 	plt.xlabel('lda component 1')
 	plt.ylabel('lda component 2')
+	
 	plt.xlim(x[0].min() - .5, x[0].max() + .5)
 	plt.ylim(x[1].min() - .5, x[1].max() + .5)
 	plt.grid( True )
@@ -112,13 +116,13 @@ if __name__ == '__main__':
 	#plot_iris_data(x, x_pca, y, plot_path, 'iris_data', plot=False)
 
 	# LDA classifier -> in mia lib
-	w, bias, x_h, label_list = train_lda_classifier(x, y, method='class_independent', n_lda_dim=1)
-
-	print("transformed data: ", x_h.shape)
+	w, bias, x_h, mu_k_h, label_list = train_lda_classifier( x, y, 
+		method='class_independent', n_lda_dim=1 )
+	print( "transformed data: ", x_h.shape )
 
 	# plot transformed data x_h = [k-1, n]
-	plot_transformed_data( x_h, y, plot_path, name='lda_transformed', plot=False )
-
+	plot_transformed_data( x_h, mu_k_h ,y , plot_path, 
+		name='lda_transformed', plot=False )
 
 	# TODO: classify new samples (or the same ones) -> in mia lib
 	# y_hat = lda_classify( x, w, bias, label_list)

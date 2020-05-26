@@ -52,7 +52,7 @@ def calc_pitch_gram( hp, x, n ):
   x_buff_win = x_buff * np.hanning( n )
 
   X_buff_win = np.abs( np.fft( x_buff_win, n ))
-  X_buff_win = x_buff_win[  ]
+  # X_buff_win = x_buff_win[  ]
 
 
   pass
@@ -406,7 +406,7 @@ def calc_class_scatter_matrices(x, y):
   # calculate within class scatter matrix S_w [m x m]
   Sw = np.einsum('k, kmn -> mn', p_k, cov_k)
 
-  return Sw, Sb, cov_k, label_list, p_k
+  return Sw, Sb, cov_k, mu_k, label_list
 
 
 def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
@@ -419,8 +419,8 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
   n, m = x.shape
 
   # calculate scatter matrices
-  Sw, Sb, cov_k, label_list, p_k = calc_class_scatter_matrices(x, y)
-
+  Sw, Sb, cov_k, mu_k, label_list = calc_class_scatter_matrices(x, y)
+  
   # number of classes
   n_classes = len( label_list )
 
@@ -436,12 +436,7 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
     # transformed data [k-1 x n] = [k-1 x m] @ [m x n]
     x_h = w.T @ x.T
 
-    # bias [k-1]
-    lda_coeffs = np.einsum( 'k, kmn -> mn', p_k, cov_k )
-    print( lda_coeffs )
-
     bias = np.mean(x_h, axis=1)
-    print( 'bias: {}'.format( bias ))
 
   # class dependent use covariance instead of S_w
   elif method == 'class_dependent':
@@ -465,8 +460,11 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
 
       # bias
       bias[k] = np.mean(x_h[y==label_list[k]])
+  
+  print(w.T.shape, mu_k.shape)
+  mu_k_h = w.T @ mu_k.T
 
-  return w, bias, x_h, label_list
+  return w, bias, x_h, mu_k_h, label_list
 
 
 def compute_lambda( W, H, T, M, N ):

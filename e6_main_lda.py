@@ -64,22 +64,46 @@ def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 	plot transformed data lda data points
 	"""
 
+	
+	# computing the class boundaries:------------------------------------------
+	mu_12 = ( mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ] ) / 2
+	mu_23 = ( mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ] ) / 2
+	mu_31 = ( mu_k_h[ :, 2 ]  +  mu_k_h[ :, 0 ] ) / 2
+
+	mu = np.array( [ mu_12, mu_23, mu_31 ] ).T
+
+	k1 = mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ]
+	s1 = -1 * ( k1[1] / k1[0] )
+	i1 = mu_12[1] - s1 * mu_12[0]
+
+	k2 = mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ]
+	s2 = -1 * ( k2[1] / k2[0] )
+	i2 = mu_23[1] - s2 * mu_23[0]
+
+	x_l1 = np.linspace( -3, 3, 100)
+
+	#--------------------------------------------------------------------------
 	plt.figure( figsize=(8, 6) )
+
 	plt.scatter( x[0], x[1], c=y, cmap=plt.cm.Set1, edgecolor='k' )
 	plt.scatter( mu_k_h[ 0 , : ], mu_k_h[ 1 , : ], color='k', marker='x', 
 		antialiased=True )
+
+	# Plot class Separation threshholds:---------------------------------------
+	plt.scatter( mu[ 0 , : ], mu[ 1 , : ], color='k', s=10 )
+
+	plt.plot( x_l1, (s1*x_l1) + i1,  '--b')
+	plt.plot( x_l1, (s2*x_l1) + i2,  '--r')	
 	
-	plt.xlabel('lda component 1')
-	plt.ylabel('lda component 2')
+	plt.xlabel( 'lda component 1' )
+	plt.ylabel( 'lda component 2' )
 	
-	plt.xlim(x[0].min() - .5, x[0].max() + .5)
-	plt.ylim(x[1].min() - .5, x[1].max() + .5)
+	plt.xlim( x[0].min() - .5, x[0].max() + .5 )
+	plt.ylim( x[1].min() - .5, x[1].max() + .5 )
 	plt.grid( True )
-	#plt.xticks(())
-	#plt.yticks(())
 
 	if plot:
-		plt.savefig(plot_path + name + '.png', dpi=150)
+		plt.savefig( plot_path + name + '.png', dpi=150 )
 
 #------------------------------------------------------------------------------
 # Main function
@@ -109,11 +133,10 @@ if __name__ == '__main__':
 	
 	# apply pca
 	x_pca, _ = calc_pca(iris.data)
-
 	print("pca: ", x_pca.shape)
 
 	# visualize iris data
-	#plot_iris_data(x, x_pca, y, plot_path, 'iris_data', plot=False)
+	# plot_iris_data(x, x_pca, y, plot_path, 'iris_data', plot=False)
 
 	# LDA classifier -> in mia lib
 	w, bias, x_h, mu_k_h, label_list = train_lda_classifier( x, y, 

@@ -461,7 +461,6 @@ def train_lda_classifier(x, y, method='class_independent', n_lda_dim=1):
       # bias
       bias[k] = np.mean(x_h[y==label_list[k]])
   
-  print(w.T.shape, mu_k.shape)
   mu_k_h = w.T @ mu_k.T
 
   return w, bias, x_h, mu_k_h, label_list

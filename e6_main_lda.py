@@ -3,6 +3,7 @@ mia2 - lda
 """
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
@@ -63,24 +64,24 @@ def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 	"""
 	plot transformed data lda data points
 	"""
-
 	
-	# computing the class boundaries:------------------------------------------
+	# computing the class boundaries means:------------------------------------
 	mu_12 = ( mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ] ) / 2
 	mu_23 = ( mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ] ) / 2
 	mu_31 = ( mu_k_h[ :, 2 ]  +  mu_k_h[ :, 0 ] ) / 2
-
 	mu = np.array( [ mu_12, mu_23, mu_31 ] ).T
 
-	k1 = mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ]
-	s1 = -1 * ( k1[1] / k1[0] )
-	i1 = mu_12[1] - s1 * mu_12[0]
+	# calculation of 
+	distance_1_2 = mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ]
+	distance_2_3 = mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ]
 
-	k2 = mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ]
-	s2 = -1 * ( k2[1] / k2[0] )
-	i2 = mu_23[1] - s2 * mu_23[0]
+	slope_1 = -1 * ( distance_1_2[1] / distance_1_2[0] )
+	slope_2 = -1 * ( distance_2_3[1] / distance_2_3[0] )
 
-	x_l1 = np.linspace( -3, 3, 100)
+	intercept_1 = mu_12[1] - slope_1 * mu_12[0]
+	intercept_2 = mu_23[1] - slope_2 * mu_23[0]
+
+	x_points = np.linspace( -3, 3, 100)
 
 	#--------------------------------------------------------------------------
 	plt.figure( figsize=(8, 6) )
@@ -89,11 +90,18 @@ def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 	plt.scatter( mu_k_h[ 0 , : ], mu_k_h[ 1 , : ], color='k', marker='x', 
 		antialiased=True )
 
+	# Little helper to get the individual colors of the colormap
+	cmap = matplotlib.cm.get_cmap( 'Set1' )
+	rgba = cmap( 0.5 )
+
 	# Plot class Separation threshholds:---------------------------------------
 	plt.scatter( mu[ 0 , : ], mu[ 1 , : ], color='k', s=10 )
 
-	plt.plot( x_l1, (s1*x_l1) + i1,  '--b')
-	plt.plot( x_l1, (s2*x_l1) + i2,  '--r')	
+	plt.plot( x_points, ( slope_1 * x_points) + intercept_1, '--', 
+	color=(0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0))
+	
+	plt.plot( x_points, ( slope_2 * x_points) + intercept_2 ,'--',
+	color=(1.0, 0.4980392156862745, 0.0, 1.0))	
 	
 	plt.xlabel( 'lda component 1' )
 	plt.ylabel( 'lda component 2' )
@@ -157,9 +165,6 @@ if __name__ == '__main__':
 	# TODO: confusion matrix check
 	# cm = confusion_matrix(y, y_hat)
 	# print("confusion matrix:\n", cm)
-
-	# TODO: (maybe nice) calculate accuracies
-
 
 	# TODO: (optional) comparance with k-means algorithm
 

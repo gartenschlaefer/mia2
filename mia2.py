@@ -2,6 +2,92 @@
 # library for mia2 - Music Information retrivAl 2
 
 import numpy as np
+import librosa
+
+
+# Lecture 9:-------------------------------------------------------------------
+
+def create_chord_mask(maj7=False, g6=False):
+  """
+  create a chord mask
+  """
+
+  # dur
+  dur_template = np.array([1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0])
+
+  # mol
+  mol_template = np.array([1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0])
+
+  # maj7
+  maj7_template = np.array([0.75, 0, 0, 0, 0.75, 0, 0, 0.75, 0, 0, 0, 1.2])
+
+  # 6
+  g6_template = np.array([0.75, 0, 0, 0, 0.75, 0, 0, 0.75, 0, 1, 0, 0])
+
+  # chroma labels
+  chroma_labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+  # chord labels
+  chord_labels = chroma_labels + [c + "m" for c in chroma_labels]
+
+  # templates concatenated
+  chord_templates = np.array([dur_template, mol_template])
+
+  # append maj7
+  if maj7 ==  True:
+    chord_templates = np.vstack((chord_templates, maj7_template))
+    chord_labels = chord_labels + [c + "maj7" for c in chroma_labels]
+
+  # append g6
+  if g6 == True:
+    chord_templates = np.vstack((chord_templates, g6_template))
+    chord_labels = chord_labels + [c + "6" for c in chroma_labels]
+
+  # init mask
+  chord_mask = np.empty((0, 12), int)
+
+  # go through all templates
+  for chord_template in chord_templates:
+    
+    # all chroma values
+    for c in range(12):
+
+      # add to events
+      chord_mask = np.vstack((chord_mask, np.roll(chord_template, c)))
+
+  return chord_mask, chroma_labels, chord_labels
+
+
+def extract_lab_file(annotation_file):
+  """
+  extract data from lab file (t_start, t_end, Akkord)
+  """
+
+  # create anno lists
+  t_start_list = []
+  t_end_list = []
+  akkord_list = []
+
+  # open file
+  with open(annotation_file, 'r') as file:
+
+    # read line
+    for line in file:
+
+      # strip line of line breaks
+      line = line.strip()
+
+      # split entries
+      t_s, t_e, akk = line.split()
+
+      # append to lists
+      t_start_list.append(float(t_s))
+      t_end_list.append(float(t_e))
+      akkord_list.append(akk)
+
+  return t_start_list, t_end_list, akkord_list
+
+
 
 # Lecture 8:-------------------------------------------------------------------
 
@@ -814,6 +900,55 @@ def calc_pca(x):
 
 
 # some basics-------------------------------------------------------------------
+
+def calc_chroma(x, fs, hop=512, n_octaves=5, bins_per_octave=36, fmin=65.40639132514966):
+  """
+  calculate chroma values with constant q-transfrom and tuning of the HPCP
+  """
+
+  # ctq
+  C = np.abs(librosa.core.cqt(x, sr=fs, hop_length=hop, fmin=fmin, n_bins=bins_per_octave * n_octaves, bins_per_octave=bins_per_octave, tuning=0.0, filter_scale=1, norm=1, sparsity=0.01, window='hann', scale=True, pad_mode='reflect', res_type=None))
+
+  # calculate HPCP
+  hpcp = HPCP(C, n_octaves, bins_per_octave=bins_per_octave)
+
+  # make a histogram of tuning bins
+  hist_hpcp = histogram_HPCP(hpcp, bins_per_octave)
+
+  # tuning
+  tuned_hpcp = np.roll(hpcp, np.argmax(hist_hpcp), axis=0)
+
+  return filter_HPCP_to_Chroma(tuned_hpcp, bins_per_octave, filter_type='median')
+
+
+def filter_HPCP_to_Chroma(tuned_hpcp, bins_per_octave, filter_type='mean'):
+  """
+  filter hpcp bins per chroma to a single chroma value, mean and median filters are possible
+  """
+  if filter_type == 'mean':
+    chroma = np.mean(np.abs(buffer2D(tuned_hpcp, bins_per_octave // 12)), axis=1)
+
+  else:
+    chroma = np.median(np.abs(buffer2D(tuned_hpcp, bins_per_octave // 12)), axis=1)
+
+  return chroma
+
+
+def histogram_HPCP(hpcp, bins_per_octave):
+  """
+  create histogram of tuning bins over all chroma and frames
+  """
+  return np.sum(np.sum(np.abs(buffer2D(hpcp, bins_per_octave // 12)), axis=0), axis=1)
+
+
+
+def HPCP(C, n_octaves, bins_per_octave=12):
+  """
+  Harmonic Pitch Class Profile calculated from cqt C
+  """
+  return np.sum(np.abs(buffer2D(C, bins_per_octave)), axis=0)
+
+
 def custom_stft(x, N=1024, hop=512, norm=True):
   """
   short time fourier transform
@@ -870,5 +1005,44 @@ def buffer(x, n, ol=0):
     # no remainder
     else:
       windows[wi] = x[wi * hop : (wi * hop) + n]
+
+  return windows
+
+
+def buffer2D(X, n, ol=0):
+  """
+  buffer function like in matlab but with 2D
+  """
+
+  # number of samples in window
+  n = int(n)
+
+  # overlap
+  ol = int(ol)
+
+  # hopsize
+  hop = n - ol
+
+  # number of windows
+  win_num = (X.shape[0] - n) // hop + 1 
+
+  # remaining samples
+  r = int(np.remainder(X.shape[0], hop))
+  if r:
+    win_num += 1;
+
+  # segments
+  windows = np.zeros((win_num, n, X.shape[1]), dtype=complex)
+
+  # segmentation
+  for wi in range(0, win_num):
+
+    # remainder
+    if wi == win_num - 1 and r:
+      windows[wi] = np.concatenate((X[wi * hop :], np.zeros((n - X[wi * hop :].shape[0], X.shape[1]))))
+
+    # no remainder
+    else:
+      windows[wi, :] = X[wi * hop : (wi * hop) + n, :]
 
   return windows

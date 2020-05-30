@@ -4,6 +4,7 @@ Automatic Harmonic Transcription
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 import librosa as libr
 import librosa.display
@@ -12,7 +13,7 @@ from scipy.io import loadmat
 
 from mia2 import *
 
-def plot_chord_mask(chord_mask, chroma_labels, chord_labels):
+def plot_chord_mask(chord_mask, chroma_labels, chord_labels, plot_path):
   """
   plot chord mask
   """
@@ -35,10 +36,12 @@ def plot_chord_mask(chord_mask, chroma_labels, chord_labels):
   plt.yticks(fontsize=10, rotation=0)
 
   plt.ylim([-0.5, 11.5])
-  plt.show()
+
+  # save
+  plt.savefig(plot_path + 'chod_mask.png', dpi=150)
 
 
-def plot_chroma(C, fs, hop, fmin, bins_per_octave, anno=[], xlim=None):
+def plot_chroma(C, fs, hop, fmin, bins_per_octave, anno=[], xlim=None, plot_path='./'):
   """
   plot whole song
   """
@@ -55,6 +58,9 @@ def plot_chroma(C, fs, hop, fmin, bins_per_octave, anno=[], xlim=None):
     plt.xlim(xlim)
 
   plt.tight_layout()
+
+  # save
+  plt.savefig(plot_path + 'chroma.png', dpi=150)
 
 
 def plot_add_anno(anno, text_height=1, xlim=None):
@@ -90,13 +96,45 @@ def plot_add_anno(anno, text_height=1, xlim=None):
     text_bias += 1
 
 
+def plot_A(A, chord_labels, plot_path, name='A'):
+  """
+  plot transition probability matrix
+  """
+
+  # set up plot
+  fig, ax = plt.subplots(1,1, figsize=(8, 6))
+
+  # plot image
+  img = ax.imshow(A, cmap='Greys', aspect='equal')
+
+  # add colorbar
+  plt.colorbar(img, ax=ax)
+
+  plt.ylabel('chord')
+  plt.xlabel('chord')
+
+  # chroma labels
+  ax.set_yticks(np.arange(len(chord_labels)))
+  ax.set_yticklabels(chord_labels)
+
+  # chord labels
+  ax.set_xticks(np.arange(len(chord_labels)))
+  ax.set_xticklabels(chord_labels)
+
+  plt.xticks(fontsize=9, rotation=90)
+  plt.yticks(fontsize=9, rotation=0)
+
+  # save
+  plt.savefig(plot_path + name + '.png', dpi=150)
+
+
 if __name__ == "__main__":
   """
   main function
   """
 
   # plot paths
-  plot_path = 'ignore/ass9_data/plots/'
+  plot_path = './ignore/ass9_data/plots/'
 
   # file paths
   annotation_file = './ignore/ass9_data/Annotations/The_Beatles_Chords/Eight_Days_a_Week.lab'
@@ -105,16 +143,11 @@ if __name__ == "__main__":
   # sound file
   sound_file = './ignore/ass9_data/Files2go/EightDaysAWeek.wav'
 
-  # read audio
-  x, fs = libr.load(sound_file)
-
-  # print some infos
-  print("x: ", x.shape), print("fs: ", fs)
+  # cqt save path
+  chroma_save_path = './ignore/ass9_data/chroma.npy'
 
   # extract annotation data: (t_start, t_end, chord)
   anno = extract_lab_file(annotation_file)
-
-  #print(anno[0]), print(anno[1]), print(anno[2])
 
 
   # --
@@ -124,8 +157,28 @@ if __name__ == "__main__":
   # T - number of time steps
 
 
-  # chromagram c: [K x T]
-  c = calc_chroma(x, fs, hop=512, n_octaves=4, bins_per_octave=36, fmin=librosa.note_to_hz('C3'))
+  # calc chroma if not already done
+  if not os.path.exists(chroma_save_path):
+
+    # read audio
+    x, fs = libr.load(sound_file)
+
+    # print some infos
+    print("x: ", x.shape), print("fs: ", fs)
+
+    # chromagram c: [K x T]
+    c = calc_chroma(x, fs, hop=512, n_octaves=4, bins_per_octave=36, fmin=librosa.note_to_hz('C3'))
+
+    # save chroma
+    np.save(chroma_save_path, c)
+
+  # load
+  else:
+
+    # load
+    c = np.load(chroma_save_path)
+
+
 
   # chord prototypes M: [N x K]
   M, chroma_labels, chord_labels = create_chord_mask(maj7=False, g6=False)
@@ -146,10 +199,13 @@ if __name__ == "__main__":
   # --
   # transition probabilities: A [N x N]
 
-  # get A matrix from beetles
-  A = loadmat(a_matrix_mat)['P']
+  # heuristic approach
+  #A = loadmat(a_matrix_mat)['P']
 
-  # TODO: heuristic transition prob.
+  # music theoretical approach
+  A = get_transition_matrix_circle5ths()
+
+
 
 
   # --
@@ -168,18 +224,21 @@ if __name__ == "__main__":
   # --
   # plots
 
+  # plot transition probability matrix A
+  #plot_A(A, chord_labels, plot_path, name='A_music')
+
   # chroma
-  #plot_chroma(c, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=(0, 30))
+  #plot_chroma(c, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=(0, 30), plot_path)
 
   # chord mask
-  #plot_chord_mask(M, chroma_labels, chord_labels)
+  #plot_chord_mask(M, chroma_labels, chord_labels, plot_path)
 
   # some prints
   print("c: ", c.shape)
   print("M: ", M.shape)
-  print("A beetles: ", A)
+  #print("A beetles: ", A)
   print("A beetles: ", A.shape)
-  print("B beetles: ", B)
+  #print("B beetles: ", B)
   print("B beetles: ", B.shape)
 
   plt.show()

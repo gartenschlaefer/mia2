@@ -7,6 +7,58 @@ import librosa
 
 # Lecture 9:-------------------------------------------------------------------
 
+def get_transition_matrix_circle5ths(gamma=1):
+  """
+  get transition matrix with music theoretical approach with circle of fifths
+  """
+
+  # chroma labels
+  chroma_labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+  # chord labels
+  chord_labels = chroma_labels + [c + "m" for c in chroma_labels]
+
+  # circle steps with minor parallel in between
+  circle_steps = ['C', 'Am', 'F', 'Dm', 'A#', 'Gm', 'D#', 'Cm', 'G#', 'Fm', 'C#', 'A#m', 'F#', 'D#m', 'B', 'G#m', 'E', 'C#m', 'A', 'F#m', 'D', 'Bm', 'G', 'Em']
+
+  # init A
+  A = np.zeros((len(chord_labels), len(chord_labels)))
+
+  # sophisticated algorithm
+  for i, cl in enumerate(chord_labels):
+
+    # roll to base
+    cs_roll = np.roll(circle_steps, -np.where(np.array(circle_steps) == cl)[0][0])
+
+    # get position in chord labels
+    circle_chord_pos = []
+
+    # calculate distance
+    d = np.zeros(len(chord_labels))
+
+    for j, cs in enumerate(cs_roll):
+
+      # position of chord
+      circle_chord_pos = np.where(np.array(chord_labels) == cs)[0][0]
+
+      # if it is more than 12 go other direction
+      if j > 12:
+        dj = 12 - j % 12
+      else:
+        dj = j
+
+      # get distance
+      d[circle_chord_pos] = dj
+
+    # update A
+    A[i] = d
+
+  # do some scaling
+  A = (12 - A + gamma) / (144 + 24 * gamma)
+
+  return A
+
+
 def create_chord_mask(maj7=False, g6=False):
   """
   create a chord mask

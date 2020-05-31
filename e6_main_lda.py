@@ -98,7 +98,7 @@ def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 	plt.scatter( mu[ 0 , : ], mu[ 1 , : ], color='k', s=10 )
 
 	plt.plot( x_points, ( slope_1 * x_points) + intercept_1, '--', 
-	color=(0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0))
+	color = ( 0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0 ))
 	
 	plt.plot( x_points, ( slope_2 * x_points) + intercept_2 ,'--',
 	color=(1.0, 0.4980392156862745, 0.0, 1.0))	
@@ -170,4 +170,3 @@ if __name__ == '__main__':
 
 	# plot all figures
 	plt.show()
-

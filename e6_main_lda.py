@@ -60,18 +60,13 @@ def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	if plot:
 		plt.savefig(plot_path + name + '_pca.png', dpi=150)
 
-def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
-	"""
-	plot transformed data lda data points
-	"""
-	
-	# computing the class boundaries means:------------------------------------
+def computing_boundaries( num_samples, mu_k_h ):
 	mu_12 = ( mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ] ) / 2
 	mu_23 = ( mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ] ) / 2
 	mu_31 = ( mu_k_h[ :, 2 ]  +  mu_k_h[ :, 0 ] ) / 2
 	mu = np.array( [ mu_12, mu_23, mu_31 ] ).T
 
-	# calculation of 
+	# calculation of distances:
 	distance_1_2 = mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ]
 	distance_2_3 = mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ]
 
@@ -80,8 +75,26 @@ def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 
 	intercept_1 = mu_12[1] - slope_1 * mu_12[0]
 	intercept_2 = mu_23[1] - slope_2 * mu_23[0]
+	
+	x_points = np.linspace( -3, 3, num_samples )
 
-	x_points = np.linspace( -3, 3, 100)
+	boundary_1 = ( slope_1 * x_points ) + intercept_1
+	boundray_2 = ( slope_2 * x_points ) + intercept_2
+
+	# new labels:--------------------------------------------------------------
+
+	return mu, boundary_1, boundray_2
+
+def plot_transformed_data( x, mu_k_h, y, plot_path, name, plot=False ):
+	"""
+	plot transformed data lda data points
+	"""
+	
+	dimensions = x.shape
+
+	# computing the class boundaries means:------------------------------------	
+	x_points = np.linspace( -3, 3, dimensions[1] )
+	mu, boundary_1, boundary_2 = computing_boundaries( dimensions[1], mu_k_h )
 
 	#--------------------------------------------------------------------------
 	plt.figure( figsize=(8, 6) )
@@ -97,10 +110,10 @@ def plot_transformed_data(x, mu_k_h, y, plot_path, name, plot=False):
 	# Plot class Separation threshholds:---------------------------------------
 	plt.scatter( mu[ 0 , : ], mu[ 1 , : ], color='k', s=10 )
 
-	plt.plot( x_points, ( slope_1 * x_points) + intercept_1, '--', 
+	plt.plot( x_points, boundary_1, '--', 
 	color = ( 0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0 ))
 	
-	plt.plot( x_points, ( slope_2 * x_points) + intercept_2 ,'--',
+	plt.plot( x_points, boundary_2 ,'--',
 	color=(1.0, 0.4980392156862745, 0.0, 1.0))	
 	
 	plt.xlabel( 'lda component 1' )

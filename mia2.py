@@ -142,7 +142,6 @@ def extract_lab_file(annotation_file):
 
 
 # Lecture 8:-------------------------------------------------------------------
-
 def f_to_midi_scale(f):
   """
   convert frequency to midi scale

@@ -60,15 +60,15 @@ def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	if plot:
 		plt.savefig(plot_path + name + '_pca.png', dpi=150)
 
-def computing_boundaries( num_samples, mu_k_h ):
-	mu_12 = ( mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ] ) / 2
-	mu_23 = ( mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ] ) / 2
-	mu_31 = ( mu_k_h[ :, 2 ]  +  mu_k_h[ :, 0 ] ) / 2
+def computing_boundaries( x, num_samples, mu_k_h ):
+	mu_12 = ( mu_k_h[ : , 0 ]  +  mu_k_h[ : , 1 ] ) / 2
+	mu_23 = ( mu_k_h[ : , 1 ]  +  mu_k_h[ : , 2 ] ) / 2
+	mu_31 = ( mu_k_h[ : , 2 ]  +  mu_k_h[ : , 0 ] ) / 2
 	mu = np.array( [ mu_12, mu_23, mu_31 ] ).T
 
 	# calculation of distances:
-	distance_1_2 = mu_k_h[ :, 0 ]  +  mu_k_h[ :, 1 ]
-	distance_2_3 = mu_k_h[ :, 1 ]  +  mu_k_h[ :, 2 ]
+	distance_1_2 = mu_k_h[ : , 0 ]  +  mu_k_h[ : , 1 ]
+	distance_2_3 = mu_k_h[ : , 1 ]  +  mu_k_h[ : , 2 ]
 
 	slope_1 = -1 * ( distance_1_2[1] / distance_1_2[0] )
 	slope_2 = -1 * ( distance_2_3[1] / distance_2_3[0] )
@@ -76,14 +76,14 @@ def computing_boundaries( num_samples, mu_k_h ):
 	intercept_1 = mu_12[1] - slope_1 * mu_12[0]
 	intercept_2 = mu_23[1] - slope_2 * mu_23[0]
 	
-	x_points = np.linspace( -3, 3, num_samples )
-
+	x_points = np.linspace( -3 , 3 , num_samples )
+	
 	boundary_1 = ( slope_1 * x_points ) + intercept_1
-	boundray_2 = ( slope_2 * x_points ) + intercept_2
+	boundary_2 = ( slope_2 * x_points ) + intercept_2
 
 	# new labels:--------------------------------------------------------------
-
-	return mu, boundary_1, boundray_2
+	
+	return mu, boundary_1, boundary_2
 
 def plot_transformed_data( x, mu_k_h, y, plot_path, name, plot=False ):
 	"""
@@ -94,7 +94,7 @@ def plot_transformed_data( x, mu_k_h, y, plot_path, name, plot=False ):
 
 	# computing the class boundaries means:------------------------------------	
 	x_points = np.linspace( -3, 3, dimensions[1] )
-	mu, boundary_1, boundary_2 = computing_boundaries( dimensions[1], mu_k_h )
+	mu, boundary_1, boundary_2 = computing_boundaries( x, dimensions[1], mu_k_h )
 
 	#--------------------------------------------------------------------------
 	plt.figure( figsize=(8, 6) )
@@ -104,8 +104,8 @@ def plot_transformed_data( x, mu_k_h, y, plot_path, name, plot=False ):
 		antialiased=True )
 
 	# Little helper to get the individual colors of the colormap
-	cmap = matplotlib.cm.get_cmap( 'Set1' )
-	rgba = cmap( 0.5 )
+	# cmap = matplotlib.cm.get_cmap( 'Set1' )
+	# rgba = cmap( 0.5 )
 
 	# Plot class Separation threshholds:---------------------------------------
 	plt.scatter( mu[ 0 , : ], mu[ 1 , : ], color='k', s=10 )

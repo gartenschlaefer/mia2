@@ -60,7 +60,10 @@ def plot_iris_data(x, x_pca, y, plot_path, name, plot=False):
 	if plot:
 		plt.savefig(plot_path + name + '_pca.png', dpi=150)
 
-def computing_boundaries( x, num_samples, mu_k_h ):
+def computing_boundaries( x, mu_k_h ):
+
+	n,m = x.shape
+
 	mu_12 = ( mu_k_h[ : , 0 ]  +  mu_k_h[ : , 1 ] ) / 2
 	mu_23 = ( mu_k_h[ : , 1 ]  +  mu_k_h[ : , 2 ] ) / 2
 	mu_31 = ( mu_k_h[ : , 2 ]  +  mu_k_h[ : , 0 ] ) / 2
@@ -76,30 +79,41 @@ def computing_boundaries( x, num_samples, mu_k_h ):
 	intercept_1 = mu_12[1] - slope_1 * mu_12[0]
 	intercept_2 = mu_23[1] - slope_2 * mu_23[0]
 	
-	x_points = np.linspace( -3 , 3 , num_samples )
-	
-	boundary_1 = ( slope_1 * x_points ) + intercept_1
-	boundary_2 = ( slope_2 * x_points ) + intercept_2
+	boundary_1 = ( slope_1 * x[0, :] ) + intercept_1
+	boundary_2 = ( slope_2 * x[0, :] ) + intercept_2
 
 	# new labels:--------------------------------------------------------------
+	classes = [ 0 , 1 , 2 ]
 	
-	return mu, boundary_1, boundary_2
+	test_1 = np.array( [ x[0 , :], boundary_1 ] )
+	test_2 = np.array( [ x[0 , :], boundary_2 ] )
 
-def plot_transformed_data( x, mu_k_h, y, plot_path, name, plot=False ):
+	b_1 = x[1 , :] < test_1[1 , :]
+	b_2 = np.logical_and( x[1 , :] >= test_1[1 , :] , x[1 , :] >= test_2[1 , :] )
+	b_3 = x[1 , :] < test_2[1 , :]
+
+	X = np.zeros((  m , 1 ))
+	X[ b_1 ] = classes[ 0 ]
+	X[ b_2 ] = classes[ 1 ]
+	X[ b_3 ] = classes[ 2 ]
+
+	return mu, X, boundary_1, boundary_2
+
+def plot_transformed_data( x_h, mu_k_h, y, plot_path, name, plot=False ):
 	"""
 	plot transformed data lda data points
 	"""
-	
-	dimensions = x.shape
 
 	# computing the class boundaries means:------------------------------------	
-	x_points = np.linspace( -3, 3, dimensions[1] )
-	mu, boundary_1, boundary_2 = computing_boundaries( x, dimensions[1], mu_k_h )
+	mu, y_hat ,boundary_1, boundary_2 = computing_boundaries( x_h, mu_k_h )
+
+	cm = confusion_matrix(y, y_hat)
+	print("confusion matrix:\n", cm)
 
 	#--------------------------------------------------------------------------
 	plt.figure( figsize=(8, 6) )
 
-	plt.scatter( x[0], x[1], c=y, cmap=plt.cm.Set1, edgecolor='k' )
+	plt.scatter( x_h[0], x_h[1], c=y, cmap=plt.cm.Set1, edgecolor='k' )
 	plt.scatter( mu_k_h[ 0 , : ], mu_k_h[ 1 , : ], color='k', marker='x', 
 		antialiased=True )
 
@@ -110,17 +124,17 @@ def plot_transformed_data( x, mu_k_h, y, plot_path, name, plot=False ):
 	# Plot class Separation threshholds:---------------------------------------
 	plt.scatter( mu[ 0 , : ], mu[ 1 , : ], color='k', s=10 )
 
-	plt.plot( x_points, boundary_1, '--', 
+	plt.plot( x_h[0, :], boundary_1, '--', 
 	color = ( 0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0 ))
 	
-	plt.plot( x_points, boundary_2 ,'--',
+	plt.plot( x_h[0, :], boundary_2 ,'--',
 	color=(1.0, 0.4980392156862745, 0.0, 1.0))	
 	
 	plt.xlabel( 'lda component 1' )
 	plt.ylabel( 'lda component 2' )
 	
-	plt.xlim( x[0].min() - .5, x[0].max() + .5 )
-	plt.ylim( x[1].min() - .5, x[1].max() + .5 )
+	plt.xlim( x_h[0].min() - .5, x_h[0].max() + .5 )
+	plt.ylim( x_h[1].min() - .5, x_h[1].max() + .5 )
 	plt.grid( True )
 
 	if plot:
@@ -171,9 +185,6 @@ if __name__ == '__main__':
 	# TODO: classify new samples (or the same ones) -> in mia lib
 	# y_hat = lda_classify( x, w, bias, label_list)
 	# plt.scatter( y_hat[ 0, : ], y_hat[ 1, : ] )
-
-	# TODO: Visualization of new data points compared to transformed data above
-
 
 	# TODO: confusion matrix check
 	# cm = confusion_matrix(y, y_hat)

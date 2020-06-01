@@ -6,7 +6,6 @@ import librosa
 
 
 # Lecture 9:-------------------------------------------------------------------
-
 def get_transition_matrix_circle5ths(gamma=1):
   """
   get transition matrix with music theoretical approach with circle of fifths
@@ -140,7 +139,6 @@ def extract_lab_file(annotation_file):
   return t_start_list, t_end_list, akkord_list
 
 
-
 # Lecture 8:-------------------------------------------------------------------
 def f_to_midi_scale(f):
   """
@@ -168,6 +166,7 @@ def create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4):
 
   return Hp
 
+
 def calc_pitch_gram( hp, x, n ):
   """ 
   - Needs buffered input signal.
@@ -194,8 +193,8 @@ def calc_pitch_gram( hp, x, n ):
 
   pass
 
-# Lecture 7:-------------------------------------------------------------------
 
+# Lecture 7:-------------------------------------------------------------------
 def calc_dp(x, y):
   """
   calculate discriminance potential of lda transformed data
@@ -628,6 +627,7 @@ def time_shift( matrix, shift, axis=1 ):
 
   return shift_matrix
 
+
 def calc_nmf(V, R=7, T=10, algorithm='lee', max_iter=100, n_print_dist=10):
   """
   perform a non-negative matrix factorization with selected algorithms
@@ -951,7 +951,6 @@ def calc_pca(x):
 
 
 # some basics-------------------------------------------------------------------
-
 def calc_chroma(x, fs, hop=512, n_octaves=5, bins_per_octave=36, fmin=65.40639132514966):
   """
   calculate chroma values with constant q-transfrom and tuning of the HPCP
@@ -990,7 +989,6 @@ def histogram_HPCP(hpcp, bins_per_octave):
   create histogram of tuning bins over all chroma and frames
   """
   return np.sum(np.sum(np.abs(buffer2D(hpcp, bins_per_octave // 12)), axis=0), axis=1)
-
 
 
 def HPCP(C, n_octaves, bins_per_octave=12):

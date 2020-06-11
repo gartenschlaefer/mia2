@@ -48,7 +48,6 @@ if __name__ == "__main__":
   # window size
   N = 2048
 
-
   # create half tone filter bank
   Hp = create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4)
 
@@ -56,7 +55,7 @@ if __name__ == "__main__":
   print("Hp: ", Hp.shape)
 
   # plot Hp
-  plt.figure(), plt.imshow(Hp, aspect='auto')
+  # plt.figure(), plt.imshow(Hp, aspect='auto')
 
 
   # --

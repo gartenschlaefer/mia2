@@ -2,7 +2,20 @@
 # library for mia2 - Music Information retrivAl 2
 
 import numpy as np
-import librosa
+
+
+# Lecture 10:-------------------------------------------------------------------
+def label_to_index(y, labels):
+  """
+  get label and produce int index
+  """
+
+  for i, label in enumerate(labels):
+
+    # replace label with index
+    y[np.where(y == label)] = i
+
+  return y.astype(int)
 
 
 # Lecture 9:-------------------------------------------------------------------
@@ -955,6 +968,8 @@ def calc_chroma(x, fs, hop=512, n_octaves=5, bins_per_octave=36, fmin=65.4063913
   """
   calculate chroma values with constant q-transfrom and tuning of the HPCP
   """
+
+  import librosa
 
   # ctq
   C = np.abs(librosa.core.cqt(x, sr=fs, hop_length=hop, fmin=fmin, n_bins=bins_per_octave * n_octaves, bins_per_octave=bins_per_octave, tuning=0.0, filter_scale=1, norm=1, sparsity=0.01, window='hann', scale=True, pad_mode='reflect', res_type=None))

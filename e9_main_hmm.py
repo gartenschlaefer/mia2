@@ -135,7 +135,7 @@ def plot_B(B, chord_labels, plot_path, name='B'):
   """
 
   # set up plot
-  fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+  fig, ax = plt.subplots(1, 1, figsize=(9, 5))
 
   img = ax.imshow(B, aspect='auto')
 
@@ -149,7 +149,6 @@ def plot_B(B, chord_labels, plot_path, name='B'):
   ax.set_yticks(np.arange(len(chord_labels)))
   ax.set_yticklabels(chord_labels)
 
-  plt.xticks(fontsize=9, rotation=90)
   plt.yticks(fontsize=9, rotation=0)
 
   # save

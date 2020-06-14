@@ -12,7 +12,37 @@ from scipy.io import loadmat
 
 from mia2 import *
 
+def fitting( X , y , kernel_type):
+  
+  # Fit the model, don't regularize for illustration purposes
+  clf = svm.SVC( C=1.0, kernel=kernel_type, degree=3, gamma='scale', 
+      random_state=0 )
+  clf.fit( X, y )
 
+  return clf
+
+#------------------------------------------------------------------------------
+def generate_circles( num_samples ):
+ 
+  r1 = 0.5 + 0.1 * np.random.randn( num_samples, 1 )
+  r2 = 1.5 + 0.2 * np.random.randn( num_samples, 1 )
+  phi = 2 * np.pi * np.random.randn( 2 * num_samples, 1 )
+
+  x1 = np.vstack( [ r1 * np.cos( phi[ 0 : num_samples ] ) ,  
+      r2 * np.cos( phi[ num_samples : ] ) ] )
+  
+  x2 = np.vstack( [ r1 * np.sin( phi[ 0 : num_samples ] ) ,  
+      r2 * np.sin( phi[ num_samples : ] ) ] )
+  
+  X = np.hstack( [ x1 , x2 ] )
+  y = np.ravel( np.vstack( [ ( 0 * np.ones( r1.shape )).astype( int ) , 
+    ( 1 * np.ones( r2.shape )).astype( int ) ] ))
+
+  y = list( y )
+
+  return X , y
+
+#------------------------------------------------------------------------------
 def svm_example():
   """
   SVM example from
@@ -45,63 +75,31 @@ def svm_example():
   plt.scatter(x[:, 0], x[:, 1], c=y)
   plt.legend()
 
-
-def other_svm_example():
+#------------------------------------------------------------------------------
+def other_svm_example( kernel_type , plot_path , save=True ):
   """
   another svm example
   """
   num_samples = 50
 
   # Exercise 1: Two linear seperable classes:--------------------------------
-  kernels = [ 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' ]
-
-  # Generate a linear seperable data set
-  # X ... The generated samples.
-  # y ... The integer labels for cluster membership of each sample.
-
-  # Try different random state values as well!
   # - https://scikit-learn.org/stable/glossary.html#term-random-state
-  X, y = make_blobs( n_samples=num_samples, centers=2, n_features=2 )
-
-  # Fit the model, don't regularize for illustration purposes
-  clf = svm.SVC( C=1.0, kernel=kernels[0], degree=3, gamma='scale', 
-      random_state=0 )
-  clf.fit( X, y )
+  name_path_1 = plot_path + '/Linear Set '
+  X , y = make_blobs( n_samples=num_samples, centers=2, n_features=2 )
+  clf = fitting( X , y , kernel_type )
 
   # Plot the clusters
-  plot_svm_contours( X, y , clf , kernels)
+  plot_svm_contours( X , y , clf , kernel_type , name_path_1 , save )
   
+  # Exercise 2: Generate two non-linear seperable sets:------------------------
+  name_path_2 = plot_path + '/Circle Set '
+  X , y = generate_circles( num_samples // 2 )
+  clf = fitting( X , y , kernel_type )
+ 
+  plot_svm_contours( X , y , clf , kernel_type , name_path_2 , save )
 
-  # Exercise 2: Two non-linear seperable classes:----------------------------
-
-  # Option 1 - Per Hand (see provided Matlabfile )
-  # Parameters for the synthetic data
-  r1 = 0.5 + 0.1 * np.random.randn( num_samples, 1 )
-  r2 = 1.5 + 0.2 * np.random.randn( num_samples, 1 )
-  phi = 2 * np.pi * np.random.randn( 2 * num_samples, 1 )
-
-  x1 = np.vstack( [ r1 * np.cos( phi[ 0 : num_samples ] ) ,  
-      r2 * np.cos( phi[ num_samples : ] ) ] )
-  
-  x2 = np.vstack( [ r1 * np.sin( phi[ 0 : num_samples ] ) ,  
-      r2 * np.sin( phi[ num_samples : ] ) ] )
-  
-  data = np.hstack( [ x1 , x2 ] )
-
-  plt.scatter( data[ :, 0 ], data[ :, 1 ] )
-  plt.show()
-
-  # 
-  # % Klassenlabels
-  # % Y=[num2str(ones(N,1));num2str(2*ones(N,1));num2str(3*ones(N,1))];
-  # Y = num2str(reshape((ones(N,1).*[1 2]),[],1));
-  # % in Y stehen jeweils pro Datensatz der dazugehörige Label ("1", "2") 
-  # idX = reshape(1:length(Y),30,2);
-  # id1 = idX(:,1);
-  # id2 = idX(:,2);
-
-
-def plot_svm_contours( X, y, clf, kernels ):
+#------------------------------------------------------------------------------
+def plot_svm_contours( X , y , clf , kernel , name_path , save ):
     """
     
     The following code is directly taken from https://bit.ly/2AqJu8o 
@@ -120,7 +118,7 @@ def plot_svm_contours( X, y, clf, kernels ):
 
     Y_cor, X_cor = np.meshgrid( y_cor, x_cor )
     grid = np.vstack( [ X_cor.ravel(), Y_cor.ravel() ] ).T
-
+    
     z = clf.decision_function( grid ).reshape( X_cor.shape )
 
     # Plot decision boundary and margins
@@ -131,11 +129,16 @@ def plot_svm_contours( X, y, clf, kernels ):
     ax.scatter( clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], 
         s=100, linewidth=1, facecolors='none', edgecolors='k' )
 
-    plt.title( 'SVM with {} kernel'.format( kernels[0] ))
+    name = 'SVM with {} kernel'.format( kernel )
+    
+    plt.title( name )
+    if save is True:
+      plt.savefig( name_path  + name + '.png', dpi=150 )
+    
     plt.show()
 
-
-def plot_transformed_data(x, y, labels, plot_path, name):
+#------------------------------------------------------------------------------
+def plot_transformed_data(x, y, labels, name_path, name):
   """
   plot transformed data lda data points
   """
@@ -143,19 +146,16 @@ def plot_transformed_data(x, y, labels, plot_path, name):
   plt.figure( figsize=(8, 6) )
 
   for i, c in enumerate(labels):
-   plt.scatter( x[0, y==i], x[1, y==i], edgecolor='k', label=c)
-
-  #plt.scatter( x[0], x[1], c=y, cmap=plt.cm.Blues, edgecolor='k', label=labels)
+    plt.scatter( x[0, y==i], x[1, y==i], edgecolor='k', label=c)
 
   plt.xlabel( 'lda component 1' )
   plt.ylabel( 'lda component 2' )
   plt.legend()
   plt.grid()
 
-  plt.savefig( plot_path + name + '.png', dpi=150 )
+  plt.savefig( name_path + name + '.png', dpi=150 )
 
-
-
+#------------------------------------------------------------------------------
 if __name__ == "__main__":
 
   # plot paths
@@ -178,36 +178,28 @@ if __name__ == "__main__":
   y = label_to_index(y, labels)
 
   # print some info
-  print("num samples: {}, num features: {}, labels: {}".format(n, m, labels))
-
-
-  # lda
-  lda_transform = True
+  print( "num samples: {}, num features: {}, labels: {}".
+    format( n , m , labels ))
 
   # do lda transform
+  lda_transform = True
   if lda_transform:
-
-    w, bias, x, mu_k_h, label_list = train_lda_classifier(x, y)
-
+    w, bias, x, mu_k_h, label_list = train_lda_classifier( x , y )
     print("transformed data: ", x.shape)
 
     # plot transformed data x_h = [k-1, n]
-    #plot_transformed_data(x, y, labels, plot_path, 'lda')
+    plot_transformed_data( x , y , labels , plot_path , 'lda' )
 
+  
+  #----------------------------------------------------------------------------
+  save_fig = False
+  kernel = [ 'linear', 'poly', 'rbf', 'sigmoid' ]
 
-  other_svm_example()
+  for elem in kernel:
+    other_svm_example( elem , plot_path , save=save_fig  )
 
-
-
-  # --
-  # some plots or other stuff
-
-  # test svm
-  #svm_example()
-
-
-  # show plots
-  plt.show()
-
-
-
+  #----------------------------------------------------------------------------
+  # test svm and some plots or other stuff
+  
+  # svm_example()
+  # plt.show()

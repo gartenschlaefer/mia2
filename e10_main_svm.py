@@ -17,6 +17,7 @@ def fitting( X , y , kernel_type):
   # Fit the model, don't regularize for illustration purposes
   clf = svm.SVC( C=1.0, kernel=kernel_type, degree=3, gamma='scale', 
       random_state=0 )
+
   clf.fit( X, y )
 
   return clf
@@ -138,8 +139,8 @@ def plot_svm_contours( X , y , clf , kernel , name_path , save ):
     plt.show()
 
 #------------------------------------------------------------------------------
-def plot_transformed_data(x, y, labels, name_path, name):
-  """
+def plot_transformed_data( x , y , labels , name_path , name ):
+  """ 
   plot transformed data lda data points
   """
 
@@ -172,10 +173,10 @@ if __name__ == "__main__":
   n, m = x.shape
 
   # get labels
-  labels = np.unique(y)
+  labels = np.unique( y )
 
   # tranfer labels to int indices
-  y = label_to_index(y, labels)
+  y = label_to_index( y , labels )
 
   # print some info
   print( "num samples: {}, num features: {}, labels: {}".
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     # plot transformed data x_h = [k-1, n]
     plot_transformed_data( x , y , labels , plot_path , 'lda' )
 
-  
+
   #----------------------------------------------------------------------------
   save_fig = False
   kernel = [ 'linear', 'poly', 'rbf', 'sigmoid' ]

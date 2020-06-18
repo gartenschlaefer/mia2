@@ -24,6 +24,8 @@ def fitting( X , y , kernel_type):
 
 #------------------------------------------------------------------------------
 def generate_circles( num_samples ):
+  # make the random numbers predictable
+  np.random.seed( 0 )
  
   r1 = 0.5 + 0.1 * np.random.randn( num_samples, 1 )
   r2 = 1.5 + 0.2 * np.random.randn( num_samples, 1 )
@@ -77,7 +79,7 @@ def svm_example():
   plt.legend()
 
 #------------------------------------------------------------------------------
-def other_svm_example( kernel_type , plot_path , save=True ):
+def other_svm_example( kernel_type, plot_path, save=True ):
   """
   another svm example
   """
@@ -86,7 +88,8 @@ def other_svm_example( kernel_type , plot_path , save=True ):
   # Exercise 1: Two linear seperable classes:--------------------------------
   # - https://scikit-learn.org/stable/glossary.html#term-random-state
   name_path_1 = plot_path + '/Linear Set '
-  X , y = make_blobs( n_samples=num_samples, centers=2, n_features=2 )
+  X , y = make_blobs( n_samples=num_samples, centers=2, n_features=2, 
+    random_state=42 )
   clf = fitting( X , y , kernel_type )
 
   # Plot the clusters
@@ -100,13 +103,13 @@ def other_svm_example( kernel_type , plot_path , save=True ):
   plot_svm_contours( X , y , clf , kernel_type , name_path_2 , save )
 
 #------------------------------------------------------------------------------
-def plot_svm_contours( X , y , clf , kernel , name_path , save ):
+def plot_svm_contours( X, y, clf, kernel, name_path, save=True ):
     """
     
     The following code is directly taken from https://bit.ly/2AqJu8o 
     
     """
-    fig, ax = plt.subplots( figsize=(8, 6) )
+    fig, ax = plt.subplots( figsize=( 8 , 6 ))
     plt.scatter( X[:, 0], X[:, 1], c=y, s=30, cmap=plt.cm.Set1 )
 
     # Plot the decision function
@@ -135,23 +138,45 @@ def plot_svm_contours( X , y , clf , kernel , name_path , save ):
     if save is True:
       plt.savefig( name_path  + name + '.png', dpi=150 )
     
-
 #------------------------------------------------------------------------------
-def plot_transformed_data( x , y , labels , name_path , name , save ):
+def plot_transformed_data( x, y, clf, labels, name_path, name, save=True ):
   """ 
   plot transformed data lda data points
   """
 
-  plt.figure( num=1, figsize=(8, 6) )
+  plt.figure( num=1, figsize=( 8, 6 ))
+
+  #----------------------------------------------------------------------------
+  # Slightly adapted code from shorturl.at/jqQUY
+  
+  # Plot the decision boundary. For that, we will assign a color to each
+  # point in the mesh [x_min, x_max]x[y_min, y_max].
+  x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+  y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+  
+  # step size in the mesh
+  h = .002  
+  xx, yy = np.meshgrid( np.arange( x_min, x_max, h ), 
+    np.arange( y_min, y_max, h ))
+  
+  Z = clf.predict( np.c_[xx.ravel(), yy.ravel()] )
+
+  # Put the result into a color plot
+  Z = Z.reshape(xx.shape)
+  plt.pcolormesh( xx, yy, Z, alpha=0.1, cmap=plt.cm.Set1, antialiased=True )
 
   for i, c in enumerate(labels):
-    plt.scatter( x[0, y==i], x[1, y==i], edgecolor='k', c=y, label=c, 
-    cmap=plt.cm.Set1 )
-
+    plt.scatter( x[0, y==i], x[1, y==i], edgecolor='k', label=c )
+  
+  # Plot Layout
+  plt.title('3-Class classification using Support Vector Machine with '
+    ' kernel')
+  
   plt.xlabel( 'lda component 1' )
   plt.ylabel( 'lda component 2' )
+  plt.axis('tight')
+  
   plt.legend()
-  plt.grid()
 
   if save is True:
     plt.savefig( name_path + name + '.png', dpi=150 )
@@ -179,33 +204,32 @@ if __name__ == "__main__":
   y = label_to_index( y , labels )
 
   # print some info
-  print( "num samples: {}, num features: {}, labels: {}".
-    format( n , m , labels ))
+  print("num samples: {}, num features: {}, labels: {}".format( n, m, labels ))
 
   # do lda transform
   lda_transform = True
   if lda_transform:
-    w, bias, x, mu_k_h, label_list = train_lda_classifier( x , y )
+    w, bias, x, mu_k_h, label_list = train_lda_classifier( x, y )
     print("transformed data: ", x.shape)
 
-    # plot transformed data x_h = [k-1, n]
-    save_fig = False
-    plot_transformed_data( x , y , labels , plot_path , 'lda', save=save_fig )
-
-    # Classify via SVM
-    # clf = fitting( X , y , kernel_type )
-
-
+  # Flaf for saving all figures------------------------------------------------
+  save_fig = True
+    
   #----------------------------------------------------------------------------
-  save_fig = False
   kernel = [ 'linear', 'poly', 'rbf', 'sigmoid' ]
 
-  for elem in kernel:
-    other_svm_example( elem , plot_path , save=save_fig  )
+  # for elem in kernel:
+  #   other_svm_example( elem , plot_path , save=save_fig )
 
   #----------------------------------------------------------------------------
   # test svm and some plots or other stuff
-  
   # svm_example()
-  # plt.show()
   
+  # Performs fitting of the transformed drum data set--------------------------
+  X = x.T
+  clf = svm.SVC( C=1.0, kernel=kernel[0], degree=3, gamma='scale', 
+    random_state=0 )
+  clf.fit( X , y ) 
+
+  # plot transformed data x_h = [k-1, n]
+  plot_transformed_data( x, y, clf, labels, plot_path, 'lda_linear', save=save_fig )

@@ -150,7 +150,7 @@ def plot_transformed_data( x, y, clf, labels, name_path, name, kernel, save=True
   # Slightly adapted code from shorturl.at/jqQUY
   
   # Plot the decision boundary. For that, we will assign a color to each
-  # point in the mesh [x_min, x_max]x[y_min, y_max].
+  # point in the mesh [x_min, x_max] [y_min, y_max].
   fig, ax = plt.subplots( figsize=( 8 , 6 ))
   
    # Plot the decision function
@@ -198,7 +198,7 @@ if __name__ == "__main__":
   data = loadmat( './ignore/ass10_data/BspDrums.mat' )
 
   # get data arrays x:[n x m] n samples, m features
-  x  = data[ 'drumFeatures' ][0][0][0]
+  x  = data[ 'drumFeatures' ][0][0][0].T
   y  = data[ 'drumFeatures' ][0][0][1]
 
   # get shape of things
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     # Performs fitting of the transformed drum data set
     clf = svm.SVC( C=1.0, kernel=elem, degree=3, gamma='scale', 
       random_state=0 )
-    clf.fit( x.T, y )   
+    clf.fit( x, y )   
 
     plot_transformed_data( x, y, clf, labels, plot_path, 'lda_'+elem, 
       elem, save=save_fig )

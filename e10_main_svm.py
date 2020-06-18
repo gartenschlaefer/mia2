@@ -218,8 +218,8 @@ if __name__ == "__main__":
   #----------------------------------------------------------------------------
   kernel = [ 'linear', 'poly', 'rbf', 'sigmoid' ]
 
-  # for elem in kernel:
-  #   other_svm_example( elem , plot_path , save=save_fig )
+  for elem in kernel:
+    other_svm_example( elem , plot_path , save=save_fig )
 
   #----------------------------------------------------------------------------
   # test svm and some plots or other stuff

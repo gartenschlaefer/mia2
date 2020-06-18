@@ -139,30 +139,37 @@ def plot_svm_contours( X, y, clf, kernel, name_path, save=True ):
       plt.savefig( name_path  + name + '.png', dpi=150 )
     
 #------------------------------------------------------------------------------
-def plot_transformed_data( x, y, clf, labels, name_path, name, save=True ):
+def plot_transformed_data( x, y, clf, labels, name_path, name, kernel, save=True ):
   """ 
   plot transformed data lda data points
   """
 
-  plt.figure( num=1, figsize=( 8, 6 ))
+  plt.figure( figsize=( 8, 6 ))
 
   #----------------------------------------------------------------------------
   # Slightly adapted code from shorturl.at/jqQUY
   
   # Plot the decision boundary. For that, we will assign a color to each
   # point in the mesh [x_min, x_max]x[y_min, y_max].
+  fig, ax = plt.subplots( figsize=( 8 , 6 ))
+  
+   # Plot the decision function
+  xlim = ax.get_xlim()
+  ylim = ax.get_ylim()
+  
   x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
   y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
   
   # step size in the mesh
-  h = .002  
+  h = .01
+  
   xx, yy = np.meshgrid( np.arange( x_min, x_max, h ), 
     np.arange( y_min, y_max, h ))
   
   Z = clf.predict( np.c_[xx.ravel(), yy.ravel()] )
 
   # Put the result into a color plot
-  Z = Z.reshape(xx.shape)
+  Z = Z.reshape( xx.shape )
   plt.pcolormesh( xx, yy, Z, alpha=0.1, cmap=plt.cm.Set1, antialiased=True )
 
   for i, c in enumerate(labels):
@@ -170,11 +177,11 @@ def plot_transformed_data( x, y, clf, labels, name_path, name, save=True ):
   
   # Plot Layout
   plt.title('3-Class classification using Support Vector Machine with '
-    ' kernel')
+    '{} kernel'.format( kernel ))
   
   plt.xlabel( 'lda component 1' )
   plt.ylabel( 'lda component 2' )
-  plt.axis('tight')
+  plt.axis( 'tight' )
   
   plt.legend()
 
@@ -211,25 +218,22 @@ if __name__ == "__main__":
   if lda_transform:
     w, bias, x, mu_k_h, label_list = train_lda_classifier( x, y )
     print("transformed data: ", x.shape)
-
-  # Flaf for saving all figures------------------------------------------------
-  save_fig = True
     
   #----------------------------------------------------------------------------
+  # Flag for saving all the figures
+  save_fig = True
+
+  # Different kernel types
   kernel = [ 'linear', 'poly', 'rbf', 'sigmoid' ]
 
   for elem in kernel:
     other_svm_example( elem , plot_path , save=save_fig )
 
-  #----------------------------------------------------------------------------
-  # test svm and some plots or other stuff
-  # svm_example()
-  
-  # Performs fitting of the transformed drum data set--------------------------
-  X = x.T
-  clf = svm.SVC( C=1.0, kernel=kernel[0], degree=3, gamma='scale', 
-    random_state=0 )
-  clf.fit( X , y ) 
+    # Performs fitting of the transformed drum data set
+    clf = svm.SVC( C=1.0, kernel=elem, degree=3, gamma='scale', 
+      random_state=0 )
+    clf.fit( x.T, y )   
 
-  # plot transformed data x_h = [k-1, n]
-  plot_transformed_data( x, y, clf, labels, plot_path, 'lda_linear', save=save_fig )
+    plot_transformed_data( x, y, clf, labels, plot_path, 'lda_'+elem, 
+      elem, save=save_fig )
+ 

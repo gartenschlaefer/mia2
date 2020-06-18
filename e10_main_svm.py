@@ -1,6 +1,4 @@
 # Third party modules:---------------------------------------------------------
-
-
 import numpy as np
 
 import matplotlib
@@ -12,6 +10,7 @@ from scipy.io import loadmat
 
 from mia2 import *
 
+#------------------------------------------------------------------------------
 def fitting( X , y , kernel_type):
   
   # Fit the model, don't regularize for illustration purposes

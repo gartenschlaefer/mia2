@@ -106,11 +106,10 @@ def plot_svm_contours( X , y , clf , kernel , name_path , save ):
     The following code is directly taken from https://bit.ly/2AqJu8o 
     
     """
-    
+    fig, ax = plt.subplots( figsize=(8, 6) )
     plt.scatter( X[:, 0], X[:, 1], c=y, s=30, cmap=plt.cm.Set1 )
 
     # Plot the decision function
-    ax = plt.gca()
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
 
@@ -136,25 +135,26 @@ def plot_svm_contours( X , y , clf , kernel , name_path , save ):
     if save is True:
       plt.savefig( name_path  + name + '.png', dpi=150 )
     
-    plt.show()
 
 #------------------------------------------------------------------------------
-def plot_transformed_data( x , y , labels , name_path , name ):
+def plot_transformed_data( x , y , labels , name_path , name , save ):
   """ 
   plot transformed data lda data points
   """
 
-  plt.figure( figsize=(8, 6) )
+  plt.figure( num=1, figsize=(8, 6) )
 
   for i, c in enumerate(labels):
-    plt.scatter( x[0, y==i], x[1, y==i], edgecolor='k', label=c)
+    plt.scatter( x[0, y==i], x[1, y==i], edgecolor='k', c=y, label=c, 
+    cmap=plt.cm.Set1 )
 
   plt.xlabel( 'lda component 1' )
   plt.ylabel( 'lda component 2' )
   plt.legend()
   plt.grid()
 
-  plt.savefig( name_path + name + '.png', dpi=150 )
+  if save is True:
+    plt.savefig( name_path + name + '.png', dpi=150 )
 
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -189,7 +189,11 @@ if __name__ == "__main__":
     print("transformed data: ", x.shape)
 
     # plot transformed data x_h = [k-1, n]
-    plot_transformed_data( x , y , labels , plot_path , 'lda' )
+    save_fig = False
+    plot_transformed_data( x , y , labels , plot_path , 'lda', save=save_fig )
+
+    # Classify via SVM
+    # clf = fitting( X , y , kernel_type )
 
 
   #----------------------------------------------------------------------------
@@ -204,3 +208,4 @@ if __name__ == "__main__":
   
   # svm_example()
   # plt.show()
+  

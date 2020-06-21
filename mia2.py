@@ -180,7 +180,7 @@ def create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4):
   return Hp
 
 
-def calc_pitch_gram( hp, x, n ):
+def calc_pitch_gram( x, hp, n, bins_per_octave=12 ):
   """ 
   - Needs buffered input signal.
   - Length of a segment.
@@ -195,16 +195,17 @@ def calc_pitch_gram( hp, x, n ):
 
   """
 
-  ol = 0
-  
-  x_buff = buffer( x, n, ol=0 )
-  x_buff_win = x_buff * np.hanning( n )
+  # windowing
+  x_buff_win = buffer( x, n, ol=n//2 ) * np.hanning( n )
 
-  X_buff_win = np.abs( np.fft( x_buff_win, n ))
-  # X_buff_win = x_buff_win[  ]
+  # fft
+  X_buff_win = np.abs( np.fft.fft( x_buff_win, n ))[:, :n//2]
 
+  # filter [m x n]
+  p = hp @ X_buff_win.T
 
-  pass
+  # sum over octaves
+  return np.sum(np.abs(buffer2D(p, bins_per_octave)), axis=0)
 
 
 # Lecture 7:-------------------------------------------------------------------

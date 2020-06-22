@@ -153,6 +153,14 @@ def extract_lab_file(annotation_file):
 
 
 # Lecture 8:-------------------------------------------------------------------
+def get_chroma_labels(start_note='C'):
+
+  # chroma labels depending on start note
+  chroma_labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+  return np.roll(chroma_labels, -np.where(np.array(chroma_labels) == start_note)[0][0])
+  
+
 def f_to_midi_scale(f):
   """
   convert frequency to midi scale
@@ -164,6 +172,7 @@ def create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4):
   """
   create half-tone filterbank
   """
+  import librosa
 
   # midi notes
   p = np.arange(midi_start_note, midi_start_note + 12 * num_oct)
@@ -177,10 +186,10 @@ def create_half_tone_filterbank(N, fs, midi_start_note=43, num_oct=4):
   # half-tone filterbank
   Hp = 0.5 * np.tanh(np.pi * (1 - 2 * d)) + 0.5
 
-  return Hp
+  return Hp, get_chroma_labels(start_note=librosa.midi_to_note(midi_start_note, octave=False))
 
 
-def calc_pitch_gram( x, hp, n, bins_per_octave=12 ):
+def calc_chroma_halftone( x, hp, n, bins_per_octave=12 ):
   """ 
   - Needs buffered input signal.
   - Length of a segment.
@@ -206,6 +215,77 @@ def calc_pitch_gram( x, hp, n, bins_per_octave=12 ):
 
   # sum over octaves
   return np.sum(np.abs(buffer2D(p, bins_per_octave)), axis=0)
+
+
+def calc_crp( x, hp, n, midi_start_note=43, bins_per_octave=12, num_octaves=4, m=120, n_crp=55):
+  """ 
+  calculate CRP (chroma DCT-reduced log pitch)
+  """
+
+  from scipy.fftpack import dct, idct
+
+  # windowing
+  x_buff_win = buffer( x, n, ol=n//2 ) * np.hanning( n )
+
+  # fft
+  X_buff_win = np.abs( np.fft.fft( x_buff_win, n ))[:, :n//2]
+
+  # filter [m x n]
+  pitch = (hp @ X_buff_win.T)**2
+
+  # pitch representation
+  v = 1e-8 * np.ones((m, pitch.shape[1]))
+
+  # determine midi end note
+  midi_end = midi_start_note + num_octaves * bins_per_octave
+
+  # get pitches to corresponding positions
+  v[midi_start_note:midi_end] = pitch
+  print("v: ", v.shape)
+
+  # normalize
+  #v = v / np.linalg.norm(v, ord=2, axis=0)
+  v = v / np.linalg.norm(v, ord=2)
+  #v = v / np.linalg.norm(v, ord=2, axis=1)[:, np.newaxis]
+
+  print("v max: {}, min: {}".format(np.max(v), np.min(v)))
+
+  # log
+  v_log = np.log(100 * v + 1)
+
+  #print("v_log: ", v_log.shape)
+  #print("v_log max: {}, min: {}".format(np.max(v_log), np.min(v_log)))
+
+  # dct
+  v_dct = dct(v_log, axis=0)
+
+  #print("v_dct: ", v_dct.shape)
+  #print("v_dct max: {}, min: {}".format(np.max(v_dct), np.min(v_dct)))
+
+  # set to zero
+  v_dct[:m-n_crp, :] = 0
+
+  # norm
+  v_dct = v_dct / np.linalg.norm(v_dct, ord=2)
+  #v_dct = v_dct / np.linalg.norm(v_dct, ord=2, axis=0)
+  #v_dct = v_dct / (np.linalg.norm(v_dct, ord=2, axis=1)[:, np.newaxis] + 0.001)
+
+  # lift
+  lift = 1 / 100 * ( np.exp(idct(v_dct, axis=0)) - 1 )
+
+  #print("lift: ", lift.shape)
+  #print("lift max: {}, min: {}".format(np.max(lift), np.min(lift)))
+
+  # sum octaves
+  crp = np.sum(np.abs(buffer2D(np.abs(lift), bins_per_octave)), axis=0)
+
+  #crp = crp / np.linalg.norm(crp, ord=2, axis=0)
+  crp = crp / np.linalg.norm(crp, ord=2, axis=1)[:, np.newaxis]
+
+  print("crp max: {}, min: {}".format(np.max(crp), np.min(crp)))
+
+  # sum over octaves
+  return crp
 
 
 # Lecture 7:-------------------------------------------------------------------
@@ -965,6 +1045,18 @@ def calc_pca(x):
 
 
 # some basics-------------------------------------------------------------------
+def calc_dct(x, N):
+  """
+  discrete cosine transform
+  """
+  
+  # transformation matrix
+  H = np.cos(np.pi / N * np.outer((np.arange(N) + 0.5), np.arange(N)))
+
+  # transformed signal
+  return np.dot(x, H)
+
+
 def calc_chroma(x, fs, hop=512, n_octaves=5, bins_per_octave=36, fmin=65.40639132514966):
   """
   calculate chroma values with constant q-transfrom and tuning of the HPCP

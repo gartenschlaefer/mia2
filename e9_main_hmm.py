@@ -46,7 +46,7 @@ def plot_chroma(C, fs, hop, fmin, bins_per_octave, anno=[], xlim=None, plot_path
   """
   plot whole song
   """
-  plt.figure(2, figsize=(9, 5))
+  plt.figure(figsize=(9, 5))
   libr.display.specshow(librosa.amplitude_to_db(C, ref=np.max), sr=fs, hop_length=hop, x_axis='time', y_axis='chroma', fmin=fmin, bins_per_octave=bins_per_octave)
   plt.colorbar(format='%+2.0f dB')
   #plt.title('Constant-Q power spectrum')
@@ -233,7 +233,8 @@ if __name__ == "__main__":
   sound_file = './ignore/ass9_data/Files2go/EightDaysAWeek.wav'
 
   # cqt save path
-  chroma_save_path = './ignore/ass9_data/chroma.npy'
+  c_save_path = './ignore/ass9_data/c.npy'
+  c_hat_save_path = './ignore/ass9_data/c_hat.npy'
   fs_save_path = './ignore/ass9_data/fs.npy'
   x_save_path = './ignore/ass9_data/x.npy'
 
@@ -250,9 +251,11 @@ if __name__ == "__main__":
   # N - number of states, e.g. num of chords to detect
   # K - number of time steps
 
+  # redo chroma calc
+  redo = False
 
   # calc chroma if not already done
-  if not os.path.exists(chroma_save_path) or not os.path.exists(fs_save_path) or not os.path.exists(x_save_path):
+  if not os.path.exists(c_save_path) or not os.path.exists(fs_save_path) or not os.path.exists(x_save_path) or redo:
 
     # read audio
     x, fs = libr.load(sound_file)
@@ -260,8 +263,12 @@ if __name__ == "__main__":
     # chromagram c: [K x T]
     c = calc_chroma(x, fs, hop=hop, n_octaves=4, bins_per_octave=36, fmin=librosa.note_to_hz('C3'))
 
+    # remove transient noise
+    c_hat = matrix_median(c, n_med=6)
+
     # save chroma
-    np.save(chroma_save_path, c)
+    np.save(c_save_path, c)
+    np.save(c_hat_save_path, c_hat)
     np.save(fs_save_path, fs)
     np.save(x_save_path, x)
 
@@ -269,9 +276,10 @@ if __name__ == "__main__":
   else:
 
     # load
-    c = np.load(chroma_save_path)
-    fs = np.load(fs_save_path)
+    c = np.load(c_save_path)
+    c_hat = np.load(c_hat_save_path)
     x = np.load(x_save_path)
+    fs = np.load(fs_save_path)
 
 
   # create time vector for hop frames
@@ -310,7 +318,7 @@ if __name__ == "__main__":
   # --
   # observation probabilities: B: [M x K]
 
-  B = M @ c
+  B = M @ c_hat
 
 
   # --
@@ -338,7 +346,8 @@ if __name__ == "__main__":
   #plot_A(A, chord_labels, plot_path, name='A_music')
 
   # chroma
-  #plot_chroma(c, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
+  plot_chroma(c, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
+  plot_chroma(c_hat, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
 
   # chord mask
   #plot_chord_mask(M, chroma_labels, chord_labels, plot_path)

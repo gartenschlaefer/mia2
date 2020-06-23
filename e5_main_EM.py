@@ -54,8 +54,8 @@ def em_algorithm( X, num_centers, max_iter ):
     num_components , num_samples = X.shape
 
     # alpha are the weights for each cluster and is a 2 x 1 matrix
-    # alpha = np.random.uniform( low=0, high=1, size=( num_centers , 1 ))
-    alpha = np.array( [0.5 , 0.5] ).reshape( ( num_centers , 1 ))
+    # alpha = np.array( [0.5 , 0.5] ).reshape( ( num_centers , 1 ))
+    alpha = ( 1 / num_centers ) * np.ones( ( num_centers, 1) )
 
     # Mu is the matrix containing all the means for each cluster
     # Mu[ 0 , : ] -> components ( x , y) for cluster 1 

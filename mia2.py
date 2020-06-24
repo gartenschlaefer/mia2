@@ -19,6 +19,29 @@ def label_to_index(y, labels):
 
 
 # Lecture 9:-------------------------------------------------------------------
+
+def smoothed_beat_chroma(x, fs, hop=1024, n_octaves=4, fmin=65.40639132514966, n_med=6):
+  """
+  smoothed beat chromagram
+  """
+
+  import librosa
+
+  # chroma with cqt with tuning
+  c = calc_chroma(x, fs, hop=hop, n_octaves=n_octaves, bins_per_octave=36, fmin=fmin)
+
+  # remove transient noise
+  c = matrix_median(c, n_med=n_med)
+
+  # beat snychron smoothing of chromagram 
+  tempo, beats = librosa.beat.beat_track(x, sr=fs, hop_length=hop)
+
+  # feature averaging over beats
+  c = frame_filter(c, beats, filter_type='mean')
+
+  return c, beats
+
+
 def get_transition_matrix_circle5ths(gamma=1):
   """
   get transition matrix with music theoretical approach with circle of fifths
@@ -71,7 +94,7 @@ def get_transition_matrix_circle5ths(gamma=1):
   return A
 
 
-def create_chord_mask(maj7=False, g6=False):
+def create_chord_mask(maj7=False, g6=False, start_note='C'):
   """
   create a chord mask
   """
@@ -89,7 +112,8 @@ def create_chord_mask(maj7=False, g6=False):
   g6_template = np.array([0.75, 0, 0, 0, 0.75, 0, 0, 0.75, 0, 1, 0, 0])
 
   # chroma labels
-  chroma_labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+  #chroma_labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+  chroma_labels = list(get_chroma_labels(start_note=start_note))
 
   # chord labels
   chord_labels = chroma_labels + [c + "m" for c in chroma_labels]
@@ -153,6 +177,52 @@ def extract_lab_file(annotation_file):
 
 
 # Lecture 8:-------------------------------------------------------------------
+def harmonic_change_detection(c_proj):
+  """
+  harmonic change detection function on tonal centroid projection
+  """
+  
+  # difs
+  d = np.roll(np.roll(c_proj, -2, axis=1) - c_proj, 1, axis=1)
+
+  # cleanup
+  d[:, 0] = 0
+  d[:, -1] = 0
+
+  # distance calculation
+  hcdf = np.linalg.norm(d, axis=0)
+
+  return hcdf
+
+
+def tonal_centroid_proj(c, r=[1, 1, 0.5]):
+  """
+  tonal centroid projection
+  c: chroma with shape [m x n]
+  m: features
+  n: samples
+  """
+
+  # shape of things
+  m, n = c.shape
+
+  # length vector of chroma
+  l = np.arange(m)
+
+  # centroid projection matrix
+  phi = np.vstack(( r[0] * np.sin(7 * np.pi / 6 * l),
+                    r[0] * np.cos(7 * np.pi / 6 * l),
+                    r[1] * np.sin(3 * np.pi / 2 * l),
+                    r[1] * np.cos(3 * np.pi / 2 * l),
+                    r[2] * np.sin(2 * np.pi / 3 * l),
+                    r[2] * np.cos(2 * np.pi / 3 * l) ))
+
+  # projection
+  xi = (phi @ c) / np.linalg.norm(c, ord=1, axis=0)
+
+  return xi
+
+
 def get_chroma_labels(start_note='C'):
 
   # chroma labels depending on start note
@@ -240,51 +310,35 @@ def calc_crp( x, hp, n, midi_start_note=43, bins_per_octave=12, num_octaves=4, m
   midi_end = midi_start_note + num_octaves * bins_per_octave
 
   # get pitches to corresponding positions
-  v[midi_start_note:midi_end] = pitch
-  print("v: ", v.shape)
+  v[midi_start_note:midi_end, :] = pitch
 
-  # normalize
-  #v = v / np.linalg.norm(v, ord=2, axis=0)
+  # norm
   v = v / np.linalg.norm(v, ord=2)
-  #v = v / np.linalg.norm(v, ord=2, axis=1)[:, np.newaxis]
-
-  print("v max: {}, min: {}".format(np.max(v), np.min(v)))
 
   # log
   v_log = np.log(100 * v + 1)
 
-  #print("v_log: ", v_log.shape)
-  #print("v_log max: {}, min: {}".format(np.max(v_log), np.min(v_log)))
-
   # dct
-  v_dct = dct(v_log, axis=0)
-
-  #print("v_dct: ", v_dct.shape)
-  #print("v_dct max: {}, min: {}".format(np.max(v_dct), np.min(v_dct)))
+  v_dct = dct(v_log, axis=1)
 
   # set to zero
   v_dct[:m-n_crp, :] = 0
 
   # norm
   v_dct = v_dct / np.linalg.norm(v_dct, ord=2)
-  #v_dct = v_dct / np.linalg.norm(v_dct, ord=2, axis=0)
-  #v_dct = v_dct / (np.linalg.norm(v_dct, ord=2, axis=1)[:, np.newaxis] + 0.001)
 
   # lift
-  lift = 1 / 100 * ( np.exp(idct(v_dct, axis=0)) - 1 )
-
-  #print("lift: ", lift.shape)
-  #print("lift max: {}, min: {}".format(np.max(lift), np.min(lift)))
+  lift = 1 / 100 * ( np.exp(idct(v_dct, axis=1)) - 1 )
 
   # sum octaves
   crp = np.sum(np.abs(buffer2D(np.abs(lift), bins_per_octave)), axis=0)
 
-  #crp = crp / np.linalg.norm(crp, ord=2, axis=0)
-  crp = crp / np.linalg.norm(crp, ord=2, axis=1)[:, np.newaxis]
+  # norm
+  crp = crp / np.linalg.norm(crp, ord=2)
 
-  print("crp max: {}, min: {}".format(np.max(crp), np.min(crp)))
+  # roll to correct
+  crp = np.roll(crp, 5, axis=0)
 
-  # sum over octaves
   return crp
 
 
@@ -1032,6 +1086,41 @@ def calc_sdm(feat_frames, distance_measure='euclidean', emb=None):
 
 
 # Lecture 1:-------------------------------------------------------------------
+
+def frame_filter(feature, frames, filter_type='median', norm=False):
+  """
+  Filtering of consecutive frames defined by frames, median or mean filter
+  """
+
+  # init
+  m_feature = np.zeros((feature.shape[0], len(frames)))
+
+  # for each frame
+  for i, frame in enumerate(frames):
+
+    # stop filtering
+    if i == len(frames) - 1:
+      end_frame = -1
+
+    else:
+      end_frame = frames[i+1]
+
+    # average filter
+    if filter_type == 'mean':
+      m_feature[:, i] = np.mean(feature[:, frame:end_frame], axis=1)
+
+    # median filter
+    else:
+      m_feature[:, i] = np.median(feature[:, frame:end_frame], axis=1)
+
+  # normalize
+  if norm:
+    #print(np.linalg.norm(m_feature, ord=np.inf))
+    m_feature = m_feature / np.linalg.norm(m_feature, ord=np.inf)
+
+  return m_feature
+
+
 def calc_pca(x):
   """
   calculate pca of signal, already ordered, m x n (samples x features)

@@ -155,7 +155,7 @@ def plot_B(B, chord_labels, plot_path, name='B'):
   plt.savefig(plot_path + name + '.png', dpi=150)
 
 
-def plot_viterbi_path(path, t, hop, fs, chord_labels, anno, xlim=None, plot_path='./', name='viterbi_path'):
+def plot_viterbi_path(B, path, t, hop, fs, chord_labels, anno, xlim=None, plot_path='./', name='viterbi_path'):
   """
   plot viterbi path
   """
@@ -211,7 +211,105 @@ def plot_viterbi_path(path, t, hop, fs, chord_labels, anno, xlim=None, plot_path
   plt.yticks(fontsize=9, rotation=0)
 
   if xlim is not None:
-    plt.xlim(xlim * fs / hop)
+    plt.xlim(xlim * (fs / hop))
+    #plt.xlim(xlim)
+
+  # save
+  plt.savefig(plot_path + name + '.png', dpi=150)
+
+
+def plot_viterbi_path_beats(B, path, t, hop, fs, chord_labels, anno, beats, xlim=None, plot_path='./', name='viterbi_path_beat'):
+  """
+  plot viterbi path
+  """
+
+  d_beat = np.mean(np.diff(beats))
+
+  # create an image
+  path_img = np.zeros(B.shape)
+
+  # create image
+  for i, p in enumerate(path):
+
+    # set choosen path to one
+    path_img[p, i] = 1
+
+  # extract anno
+  start_times, end_times, chord_names = anno
+
+  # annotations
+  for t_s, t_e, chord_name in zip(start_times, end_times, chord_names):
+
+    # substituted some stuff
+    cn = re.sub(r'(/[\w0-9]+)|(:maj[\w0-9]+)|(:7)', '', chord_name)
+    cn = re.sub(r':min', 'm', cn)
+
+    # skip breaks
+    if (chord_name == 'N'):
+      continue
+
+    # determine position in chromalabels
+    p = np.where(np.array(chord_labels) == cn)[0][0]
+    #print("chord name: {} new: {} at pos: {} ".format(chord_name, cn, p))
+
+    for i, beat in enumerate(beats):
+
+      #print("t_s: {}, beat: {}".format(t_s, beat * hop / fs ))
+      if t_s < beat * hop / fs and t_e > beat * hop / fs:
+        
+        # mark anno
+        path_img[p, i] = path_img[p, i] * 2 + 2.5
+
+
+  # set up plot
+  fig, ax = plt.subplots(1, 1, figsize=(9, 5))
+
+  # plot
+  img = ax.imshow(path_img, aspect='auto', cmap='magma')
+
+  plt.ylabel('chord')
+  plt.xlabel('time [s]')
+
+  # chroma labels
+  ax.set_yticks(np.arange(len(chord_labels)))
+  ax.set_yticklabels(chord_labels)
+
+  ax.set_xticks( np.arange(0, int(t[-1]), 5) * fs / (hop * d_beat) )
+  ax.set_xticklabels( np.arange(0, int(t[-1]), 5) )
+
+  #plt.xticks(fontsize=9, rotation=90)
+  plt.yticks(fontsize=9, rotation=0)
+
+  if xlim is not None:
+    plt.xlim(xlim * (fs / (hop * d_beat)))
+
+  for l in np.arange(path_img.shape[1]):
+    plt.axvline(x=l-0.5, lw=0.5)
+  
+  for l in np.arange(len(chord_labels)):
+    plt.axhline(y=l-0.5, lw=0.5)
+
+  # save
+  plt.savefig(plot_path + name + '.png', dpi=150)
+
+
+def plot_chroma_types(c1, c2, c3, chroma_labels, plot_path='./', name='chroma_types'):
+  """
+  plot chroma types
+  """
+
+  # pitches
+  fig, ax = plt.subplots(3, 1, figsize=(9, 8))
+  plt.subplots_adjust(hspace = 0.6)
+  ax[0].imshow(c1, aspect='auto'), ax[0].set_title("chroma raw")
+  ax[1].imshow(c2, aspect='auto'), ax[1].set_title("chroma smoothed")
+  im = ax[2].imshow(c3, aspect='auto')
+  ax[2].set_title("beat smoothed")
+  #plt.colorbar(im, ax=ax[2])
+
+  for a in ax:
+    a.set_yticks(np.arange(len(chroma_labels)))
+    a.set_yticklabels(chroma_labels, fontsize=7)
 
   # save
   plt.savefig(plot_path + name + '.png', dpi=150)
@@ -235,6 +333,8 @@ if __name__ == "__main__":
   # cqt save path
   c_save_path = './ignore/ass9_data/c.npy'
   c_hat_save_path = './ignore/ass9_data/c_hat.npy'
+  c_beat_save_path = './ignore/ass9_data/c_beat.npy'
+  beats_save_path = './ignore/ass9_data/beats.npy'
   fs_save_path = './ignore/ass9_data/fs.npy'
   x_save_path = './ignore/ass9_data/x.npy'
 
@@ -242,7 +342,12 @@ if __name__ == "__main__":
   anno = extract_lab_file(annotation_file)
 
   # some params
-  hop = 512
+
+  # window size
+  N = 2048
+
+  # hop size
+  hop = N//2
 
 
   # --
@@ -253,6 +358,10 @@ if __name__ == "__main__":
 
   # redo chroma calc
   redo = False
+  #redo = True
+
+  start_note = 'C3'
+  midi_start_note=48
 
   # calc chroma if not already done
   if not os.path.exists(c_save_path) or not os.path.exists(fs_save_path) or not os.path.exists(x_save_path) or redo:
@@ -261,14 +370,28 @@ if __name__ == "__main__":
     x, fs = libr.load(sound_file)
 
     # chromagram c: [K x T]
-    c = calc_chroma(x, fs, hop=hop, n_octaves=4, bins_per_octave=36, fmin=librosa.note_to_hz('C3'))
+    #c = calc_chroma(x, fs, hop=hop, n_octaves=5, bins_per_octave=36, fmin=librosa.note_to_hz('C3'))
+
+    # create half tone filter bank
+    Hp, chroma_labels = create_half_tone_filterbank(N, fs, midi_start_note=midi_start_note, num_oct=4)
+
+    # calc CRP
+    c = calc_crp(x, Hp, N, midi_start_note=midi_start_note)
 
     # remove transient noise
     c_hat = matrix_median(c, n_med=6)
 
+    # beat snychron smoothing of chromagram 
+    tempo, beats = librosa.beat.beat_track(x, sr=fs, hop_length=hop)
+
+    # feature averaging over beats
+    c_beat = frame_filter(c_hat, beats, filter_type='mean')
+
     # save chroma
     np.save(c_save_path, c)
     np.save(c_hat_save_path, c_hat)
+    np.save(c_beat_save_path, c_beat)
+    np.save(beats_save_path, beats)
     np.save(fs_save_path, fs)
     np.save(x_save_path, x)
 
@@ -278,6 +401,8 @@ if __name__ == "__main__":
     # load
     c = np.load(c_save_path)
     c_hat = np.load(c_hat_save_path)
+    c_beat = np.load(c_beat_save_path)
+    beats = np.load(beats_save_path)
     x = np.load(x_save_path)
     fs = np.load(fs_save_path)
 
@@ -289,7 +414,7 @@ if __name__ == "__main__":
 
   # print some infos
   print("x: ", x.shape), print("fs: {}, time: {}:{}".format(fs, int(tm[-1]), int(ts[-1])))
-
+  #print("beats: ", beats)
 
   # chord prototypes M: [N x M]
   M, chroma_labels, chord_labels = create_chord_mask(maj7=False, g6=False)
@@ -318,7 +443,11 @@ if __name__ == "__main__":
   # --
   # observation probabilities: B: [M x K]
 
-  B = M @ c_hat
+  # choose chroma
+  chroma = c_beat
+  #chroma = c_hat
+
+  B = M @ chroma
 
 
   # --
@@ -329,15 +458,18 @@ if __name__ == "__main__":
   # get best path
   path = viterbi_path(Pi, A, B, scaled=True, ret_loglik=False)
 
+  print("path: ", path.shape)
+
 
   # --
   # plots
 
-  xlim = (0, 60)
+  xlim = np.array([0, 60])
   #xlim = None
 
   # plot viterbi path
-  plot_viterbi_path(path, t, hop, fs, chord_labels, anno, xlim=xlim, plot_path=plot_path, name='viterbi_path')
+  #plot_viterbi_path(B, path, t, hop, fs, chord_labels, anno, xlim=xlim, plot_path=plot_path, name='viterbi_path')
+  plot_viterbi_path_beats(B, path, t, hop, fs, chord_labels, anno, beats, xlim=xlim, plot_path=plot_path, name='viterbi_path')
   
   # plot observation probabilities
   #plot_B(B, chord_labels, plot_path, name='B')
@@ -346,8 +478,12 @@ if __name__ == "__main__":
   #plot_A(A, chord_labels, plot_path, name='A_music')
 
   # chroma
-  plot_chroma(c, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
-  plot_chroma(c_hat, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
+
+  plot_chroma_types(c, c_hat, c_beat, chroma_labels, plot_path, name='chroma_types')
+
+  #plot_chroma(c, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
+  #plot_chroma(c_hat, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
+  #plot_chroma(c_beat, fs, hop=512, fmin=librosa.note_to_hz('C3'), bins_per_octave=12, anno=anno, xlim=xlim, plot_path=plot_path)
 
   # chord mask
   #plot_chord_mask(M, chroma_labels, chord_labels, plot_path)

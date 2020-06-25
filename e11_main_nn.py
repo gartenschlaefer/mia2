@@ -17,13 +17,13 @@ if __name__ == "__main__":
     data = loadmat( './ignore/ass11_data/BspDrums.mat' )
 
     # get data arrays x:[n x m] n samples, m features
-    x  = data[ 'drumFeatures' ][0][0][0].T
+    X  = data[ 'drumFeatures' ][0][0][0].T
     
     # get the data labels
     y  = data[ 'drumFeatures' ][0][0][1]
     
     # get shape of things
-    n, m = x.shape  
+    n, m = X.shape  
     
     # get labels
     labels = np.unique( y ) 

@@ -25,18 +25,10 @@ if __name__ == "__main__":
 
     X  = data[ 'drumFeatures' ][0][0][0]
     y  = data[ 'drumFeatures' ][0][0][1] 
-    
-    # N = total number of samples
-    # M = total number of features
-    N , M = X.shape  
-    
+      
     # get labels
     labels = np.unique( y )
     y = label_to_index( y, labels )
-    
-    # print some info
-    print( "num samples: {}, num features: {}, labels: {}".
-        format( N, M, labels ) )
 
     # Part 2 - Convert to Torch tensors:---------------------------------------
     torch.set_default_dtype( torch.float64 )
@@ -66,21 +58,21 @@ if __name__ == "__main__":
     num_epochs = 10
 
     # Part 4 - Generate Training and Test set:---------------------------------
-    train_ratio = int( 0.7 * N  )
-    valid_ratio = int( 0.15 * N )
-    test_ratio  = int( 0.15 * N ) 
-
-    num_samples = train_ratio + valid_ratio + test_ratio
-    diff = N - num_samples
-
-    # Here, we make sure that the corresponding ratios 
-    # sum up to the total number of data samples, because 
-    # torch.utils.data.random_split( dataset, lengths) lengths
-    # parameter needs a sequence e.g a Python List of integers
-    if diff < 0 :   train_ratio -= diff
-    elif diff > 0 : train_ratio += diff
-    ratios = [ train_ratio, valid_ratio, test_ratio ]
+    # The following code is based on https://bit.ly/3dAxv5S    
     
-    train_set, valid_set, test_set = torch.utils.data.random_split(
-       X, ratios )
+    # N = total number of samples
+    # M = total number of features
+    data_set_size , data_set_features = X.shape
+    indices = list( range( data_set_size ) )
 
+    # Splits for the different sets
+    training_split = 0.7
+    validation_split = 0.15
+    testing_split = 0.15
+
+    split_1 = int( np.floor( validation_split * data_set_size ) )
+    split_2 = int( np.floor( testing_split * data_set_size ) )
+
+    # print some info
+    print( "num samples: {}, num features: {}, labels: {}".
+        format( data_set_size, data_set_features, labels ) )

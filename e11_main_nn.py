@@ -17,7 +17,7 @@ if __name__ == "__main__":
     data = loadmat( './ignore/ass11_data/BspDrums.mat' )
 
     # get data arrays x:[n x m] n samples, m features
-    X  = data[ 'drumFeatures' ][0][0][0].T
+    X  = data[ 'drumFeatures' ][0][0][0]
     
     # get the data labels
     y  = data[ 'drumFeatures' ][0][0][1]
@@ -26,10 +26,11 @@ if __name__ == "__main__":
     n, m = X.shape  
     
     # get labels
-    labels = np.unique( y ) 
+    labels = np.unique( y )
     
     # tranfer labels to int indices
-    y = label_to_index( y, labels )    
+    y = label_to_index( y, labels )
+    print( y )
     
     # print some info
     print("num samples: {}, num features: {}, labels: {}".

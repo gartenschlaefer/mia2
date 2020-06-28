@@ -19,7 +19,7 @@ from scipy.io import loadmat
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
     
-    # Part 1 - Loading:
+    # Part 1 - Loading:--------------------------------------------------------
     plot_path = 'ignore/ass10_data/plots/'
     data = loadmat( './ignore/ass11_data/BspDrums.mat' )
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     print("num samples: {}, num features: {}, labels: {}".
         format( n, m, labels ) )
 
-    # Part 2 - Convert to Torch tensors:
+    # Part 2 - Convert to Torch tensors:---------------------------------------
     torch.set_default_dtype( torch.float64 )
 
     # Possibility 1
@@ -45,9 +45,9 @@ if __name__ == "__main__":
 
     # Possibility 2
     X = torch.tensor( X, dtype=torch.float64, requires_grad=True ) 
-    y = torch.tensor( y, dtype=torch.float64, requires_grad=False )
+    y = torch.tensor( y, dtype=torch.int64, requires_grad=False )
 
-    # Part 3 - Instantiate Neural Net
+    # Part 3 - Instantiate Neural Net:-----------------------------------------
     in_dim = 45
     hid_dim = 2
     out_dim = 3

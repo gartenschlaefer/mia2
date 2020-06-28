@@ -1,9 +1,11 @@
 # Torch Module:----------------------------------------------------------------
 import torch 
 import torch.optim as optim
+from torch.utils.data import SubsetRandomSampler
 
 # Import User defined MLP class:-----------------------------------------------
 import MLP
+import generateSets
 
 # Import User defined label_to_index function:---------------------------------
 from mia2 import label_to_index
@@ -63,16 +65,16 @@ if __name__ == "__main__":
     # N = total number of samples
     # M = total number of features
     data_set_size , data_set_features = X.shape
-    indices = list( range( data_set_size ) )
-
-    # Splits for the different sets
-    training_split = 0.7
-    validation_split = 0.15
-    testing_split = 0.15
-
-    split_1 = int( np.floor( validation_split * data_set_size ) )
-    split_2 = int( np.floor( testing_split * data_set_size ) )
+    train, valid, test = generateSets.generate( data_set_size )
 
     # print some info
     print( "num samples: {}, num features: {}, labels: {}".
         format( data_set_size, data_set_features, labels ) )
+
+    # For more information
+    # https://pytorch.org/docs/stable/data.html#dataset-types
+    train_sampler = SubsetRandomSampler( train )
+    valid_sampler = SubsetRandomSampler( valid )
+    test_sampler = SubsetRandomSampler( test )
+
+    print( train_sampler )

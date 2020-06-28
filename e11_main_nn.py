@@ -55,3 +55,7 @@ if __name__ == "__main__":
 
     # Print all net parameters onto the screen
     print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
+
+    # Define a loss function and choose an optimizer
+    criterion = torch.nn.MSELoss()
+    optimizer = optim.SGD( net.parameters(), lr=0.001, momentum=0.9 )

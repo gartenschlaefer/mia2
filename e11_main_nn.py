@@ -84,6 +84,3 @@ if __name__ == "__main__":
     train_set, valid_set, test_set = torch.utils.data.random_split(
        X, ratios )
 
-    print( len( train_set ) )
-    print( len( valid_set ) )
-    print( len( test_set ) )

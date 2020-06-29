@@ -26,7 +26,7 @@ if __name__ == "__main__":
     file_path = './ignore/ass11_data/BspDrums.mat'
     
     data = loadmat( file_path )
-    data_set = customData.CustomDataSetFromMat( file_path )
+    data_set = customData.CustomDataSetFromMat( file_path, 'drumFeatures' )
 
     # Part 2 - Set default torch model data type:------------------------------
     torch.set_default_dtype( torch.float64 )
@@ -42,9 +42,6 @@ if __name__ == "__main__":
     criterion = torch.nn.MSELoss( )
     optimizer = optim.SGD( net.parameters( ), lr=0.001, momentum=0.9 )
 
-    # Define number of epochs
-    num_epochs = 10
-
     # Part 4 - Generate Training and Test set:---------------------------------
     # The following code is based on https://bit.ly/3dAxv5S    
     train, valid, test = data_set.generate_sets( data_set.__len__( ), 
@@ -55,3 +52,6 @@ if __name__ == "__main__":
     train_sampler = SubsetRandomSampler( train )
     valid_sampler = SubsetRandomSampler( valid )
     test_sampler = SubsetRandomSampler( test )
+
+    # Define number of epochs
+    num_epochs = 10

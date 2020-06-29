@@ -4,13 +4,13 @@ from scipy.io import loadmat
 from torch.utils.data import Dataset
 
 class CustomDataSetFromMat( Dataset ):
-    def __init__( self, mat_path ):
+    def __init__( self, mat_path, key ):
         
         super( CustomDataSetFromMat, self ).__init__(  )
         
         self.data = loadmat( mat_path )
-        self.drum_feats = self.data[ 'drumFeatures' ][0][0][0]
-        self.drum_labels = self.data[ 'drumFeatures' ][0][0][1] 
+        self.drum_feats = self.data[ key ][0][0][0]
+        self.drum_labels = self.data[ key ][0][0][1] 
     
     def __getitem__( self, index ):
         drum_sound = self.drum_feats[ index, : ]

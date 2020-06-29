@@ -46,13 +46,16 @@ if __name__ == "__main__":
     # print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
 
     # Define a loss function and choose an optimizer
-    criterion = torch.nn.MSELoss( reduction='mean' )
-    optimizer = optim.SGD( net.parameters( ), lr=0.001, momentum=0.9 )
+    #criterion = torch.nn.MSELoss( reduction='mean' )
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = optim.SGD( net.parameters( ), lr=1e-5, momentum=0.8 )
 
     # Part 4 - Generate Training and Test set:---------------------------------
     # The following code is based on https://bit.ly/3dAxv5S    
     train, valid, test = data_set.generate_sets( data_set.__len__( ), 
         0.6, 0.2 ) 
+
+    #print("train: ", train.shape)
 
     # For more information:
     # - https://bit.ly/2NzOASO
@@ -63,13 +66,14 @@ if __name__ == "__main__":
     valid_sampler = SubsetRandomSampler( valid )
     test_sampler = SubsetRandomSampler( test )
 
-    train_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
+    batch_size = 2
+    train_loader = torch.utils.data.DataLoader( data_set, batch_size=batch_size,
         num_workers=0, sampler=train_sampler)
 
-    valid_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
+    valid_loader = torch.utils.data.DataLoader( data_set, batch_size=batch_size,
         num_workers=0, sampler=valid_sampler)
 
-    testloader = torch.utils.data.DataLoader( data_set, batch_size=4,
+    testloader = torch.utils.data.DataLoader( data_set, batch_size=batch_size,
         num_workers=0, sampler=test_sampler )
 
     # Train the network
@@ -80,21 +84,65 @@ if __name__ == "__main__":
             # get the inputs; data is a list of [ inputs, labels ]
             inputs, labels = data
 
+            # conversion of data type
+            inputs = torch.tensor(inputs, dtype=torch.double)
+            labels = torch.tensor(labels, dtype=torch.long)
+
             # Zero the parameter gradients, otherwise we would 
             # accumulate the gradients for each loop iteration! 
             optimizer.zero_grad(  )
 
             # Forward + Backward + optimize
             outputs = net( inputs )
-            loss = criterion( outputs, labels.view( -1, 1 ) )
+
+            # loss
+            loss = criterion( outputs, labels )
+
+            #print("inputs: ", inputs), print("outputs: ", outputs), print("labels: ", labels), print("loss: ", loss)
+
             loss.backward(  )
             optimizer.step(  )
 
             # print statistics
             running_loss += loss.item(  )
-            # if i % 10 == 9:
-            #     print( "[%d, %5d] loss %.3f" % ( epoch + 1 , i + 1, 
-            #         running_loss / 10 ) )
-            #     running_loss = 0.0
-                  
+            if i % 100 == 99:
+                print( "[%d, %5d] loss %.3f" % ( epoch + 1 , i + 1, 
+                    running_loss / 10 ) )
+                running_loss = 0.0
+
     print( 'Finished Training' )
+
+    # --
+    # evaluate whole dataset
+
+    # metric init
+    correct = 0
+    total = 0
+
+    # no gradients for eval
+    with torch.no_grad():
+
+        # load data
+        for data in testloader:
+
+            # extract sample
+            inputs, labels = data
+
+            # classify
+            outputs = net(inputs)
+
+            # prediction
+            _, predicted = torch.max(outputs.data, 1)
+
+            #print("predicted: ", predicted[0].item())
+            #print("l: ", labels[0].item())
+
+            # add total amount of prediction
+            total += labels.size(0)
+
+            # check if correctly predicted
+            correct += (predicted == labels).sum().item()
+
+    # plot accuracy
+    print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
+                  

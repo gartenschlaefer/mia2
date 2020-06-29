@@ -47,11 +47,23 @@ if __name__ == "__main__":
     train, valid, test = data_set.generate_sets( data_set.__len__( ), 
         0.7, 0.15 ) 
 
-    # For more information
-    # https://pytorch.org/docs/stable/data.html#dataset-types
+    # For more information:
+    # - https://bit.ly/2NzOASO
+    # 
+    # For SubsetRandomSampler(  ):
+    # - https://bit.ly/3eL1cm3 
     train_sampler = SubsetRandomSampler( train )
     valid_sampler = SubsetRandomSampler( valid )
     test_sampler = SubsetRandomSampler( test )
+
+    train_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
+        shuffle=True, num_workers=0, sampler=train_sampler)
+    
+    valid_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
+        shuffle=True, num_workers=0, sampler=valid_sampler)
+
+    testloader = torch.utils.data.DataLoader( data_set, batch_size=4,
+        shuffle=False, num_workers=0, sampler=test_sampler )
 
     # Define number of epochs
     num_epochs = 10

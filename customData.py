@@ -26,15 +26,13 @@ class CustomDataSetFromMat( Dataset ):
     
         random_seed = 42
         np.random.seed( random_seed )
-    
+         
         indices = list( range( dataset_size ) )
 
-        # Splits for the different sets
         test_ratio = int( ( 1 - train_ratio ) // valid_ratio )
-    
         train_split = int( np.ceil( train_ratio * dataset_size ) )
-        test_split =  int( ( dataset_size - train_split ) // test_ratio )
-        test_split += train_split
+        test_split  = train_split + int( ( dataset_size - train_split ) 
+            // test_ratio )
         
         # randomly shuffle the indices
         np.random.shuffle( indices )

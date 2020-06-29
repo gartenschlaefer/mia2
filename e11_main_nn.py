@@ -43,7 +43,7 @@ if __name__ == "__main__":
     net = MLP.MLP_Net( in_dim, hid_dim, out_dim )
 
     # Print all net parameters onto the screen
-    print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
+    # print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
 
     # Define a loss function and choose an optimizer
     criterion = torch.nn.MSELoss( reduction='mean' )
@@ -79,9 +79,8 @@ if __name__ == "__main__":
         for i , data in enumerate( train_loader, 0 ):
             # get the inputs; data is a list of [ inputs, labels ]
             inputs, labels = data
-            print( inputs, labels )
+            print( inputs.size(), labels.size() )
 
-            """    
             # Zero the parameter gradients, otherwise we would 
             # accumulate the gradients for each loop iteration! 
             optimizer.zero_grad(  )
@@ -99,6 +98,6 @@ if __name__ == "__main__":
                 print( "[ {:d}  {:5d} ] loss { .3f }".format( epoch + 1, i + 1, 
                     running_loss / 10 ) )
                 running_loss = 0.0
-            """
+            
             
     print( 'Finished Training' )

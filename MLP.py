@@ -11,6 +11,6 @@ class MLP_Net( nn.Module ):
         self.fc2 = nn.Linear( hid_dim, out_dim )
     
     def forward( self, x ):
-        x = F.relu( self.fc1( x ) )
-        x = F.sigmoid( self.fc2( x ) )
+        x = torch.relu( self.fc1( x ) )
+        x = torch.sigmoid( self.fc2( x ) )
         return x

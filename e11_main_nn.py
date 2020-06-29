@@ -16,8 +16,6 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from scipy.io import loadmat
-
 #------------------------------------------------------------------------------
 if __name__ == "__main__":
     
@@ -25,7 +23,6 @@ if __name__ == "__main__":
     plot_path = 'ignore/ass10_data/plots/'
     file_path = './ignore/ass11_data/BspDrums.mat'
     
-    data = loadmat( file_path )
     data_set = customData.CustomDataSetFromMat( file_path, 'drumFeatures' )
     
     # Convert drum_labels to integers

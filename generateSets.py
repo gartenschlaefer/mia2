@@ -1,8 +1,8 @@
 import numpy as np
 
-def generate( data_set_size ):    
+def generate( dataset_size ):    
 
-    indices = list( range( data_set_size ) )
+    indices = list( range( dataset_size ) )
     
     random_seed = 42
     np.random.seed( random_seed )
@@ -12,8 +12,8 @@ def generate( data_set_size ):
     valid_ratio = 0.15
     test_ratio = int( ( 1 - train_ratio ) // valid_ratio )
 
-    train_split = int( np.ceil( train_ratio * data_set_size ) )
-    test_split =  int( ( data_set_size - train_split ) // test_ratio )
+    train_split = int( np.ceil( train_ratio * dataset_size ) )
+    test_split =  int( ( dataset_size - train_split ) // test_ratio )
     test_split += train_split
     
     # randomly shuffle the indices

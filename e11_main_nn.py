@@ -27,7 +27,14 @@ if __name__ == "__main__":
     
     data = loadmat( file_path )
     data_set = customData.CustomDataSetFromMat( file_path, 'drumFeatures' )
-
+    
+    # Convert drum_labels to integers
+    unique_flags = np.unique( data_set.drum_labels )
+    
+    data_set.drum_labels = label_to_index( data_set.drum_labels, unique_flags )
+    data_set.drum_labels = torch.tensor( data_set.drum_labels, 
+        dtype=torch.float64, requires_grad=False )
+      
     # Part 2 - Set default torch model data type:------------------------------
     torch.set_default_dtype( torch.float64 )
 
@@ -36,7 +43,7 @@ if __name__ == "__main__":
     net = MLP.MLP_Net( in_dim, hid_dim, out_dim )
 
     # Print all net parameters onto the screen
-    # print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
+    print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
 
     # Define a loss function and choose an optimizer
     criterion = torch.nn.MSELoss( reduction='mean' )
@@ -59,11 +66,6 @@ if __name__ == "__main__":
     train_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
         num_workers=0, sampler=train_sampler)
 
-    dataiter = iter( train_loader )
-    _, labels = dataiter.next()
-
-    print( labels )
-    
     valid_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
         num_workers=0, sampler=valid_sampler)
 
@@ -77,8 +79,9 @@ if __name__ == "__main__":
         for i , data in enumerate( train_loader, 0 ):
             # get the inputs; data is a list of [ inputs, labels ]
             inputs, labels = data
+            print( inputs, labels )
 
-            """
+            """    
             # Zero the parameter gradients, otherwise we would 
             # accumulate the gradients for each loop iteration! 
             optimizer.zero_grad(  )
@@ -97,5 +100,5 @@ if __name__ == "__main__":
                     running_loss / 10 ) )
                 running_loss = 0.0
             """
-
+            
     print( 'Finished Training' )

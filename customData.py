@@ -9,8 +9,8 @@ class CustomDataSetFromMat( Dataset ):
         super( CustomDataSetFromMat, self ).__init__(  )
         
         self.data = loadmat( mat_path )
-        self.drum_feats = self.data[ key ][0][0][0]
-        self.drum_labels = self.data[ key ][0][0][1] 
+        self.drum_feats = self.data[ key ][ 0 ][ 0 ][ 0 ]
+        self.drum_labels = self.data[ key ][ 0 ][ 0 ][ 1 ]
     
     def __getitem__( self, index ):
         drum_sound = self.drum_feats[ index, : ]

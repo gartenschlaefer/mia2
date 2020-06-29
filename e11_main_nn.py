@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # print( "Neural Network parameters {}".format( list( net.parameters( ) ) ) )
 
     # Define a loss function and choose an optimizer
-    criterion = torch.nn.MSELoss( )
+    criterion = torch.nn.MSELoss( reduction='mean' )
     optimizer = optim.SGD( net.parameters( ), lr=0.001, momentum=0.9 )
 
     # Part 4 - Generate Training and Test set:---------------------------------
@@ -57,13 +57,45 @@ if __name__ == "__main__":
     test_sampler = SubsetRandomSampler( test )
 
     train_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
-        shuffle=True, num_workers=0, sampler=train_sampler)
+        num_workers=0, sampler=train_sampler)
+
+    dataiter = iter( train_loader )
+    _, labels = dataiter.next()
+
+    print( labels )
     
     valid_loader = torch.utils.data.DataLoader( data_set, batch_size=4,
-        shuffle=True, num_workers=0, sampler=valid_sampler)
+        num_workers=0, sampler=valid_sampler)
 
     testloader = torch.utils.data.DataLoader( data_set, batch_size=4,
-        shuffle=False, num_workers=0, sampler=test_sampler )
+        num_workers=0, sampler=test_sampler )
 
-    # Define number of epochs
-    num_epochs = 10
+    # Train the network
+    num_epochs = 2
+    for epoch in range( num_epochs ):
+        running_loss = 0.0
+        for i , data in enumerate( train_loader, 0 ):
+            # get the inputs; data is a list of [ inputs, labels ]
+            inputs, labels = data
+
+            """
+            # Zero the parameter gradients, otherwise we would 
+            # accumulate the gradients for each loop iteration! 
+            optimizer.zero_grad(  )
+
+            # Forward + Backward + optimize
+            outputs = net( inputs )
+            loss = criterion( outputs, labels )
+            loss.backward(  )
+            optimizer.step(  )
+
+            # print statistics
+            running_loss += loss.item(  )
+
+            if i % 10 == 0:
+                print( "[ {:d}  {:5d} ] loss { .3f }".format( epoch + 1, i + 1, 
+                    running_loss / 10 ) )
+                running_loss = 0.0
+            """
+
+    print( 'Finished Training' )

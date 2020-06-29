@@ -52,7 +52,7 @@ if __name__ == "__main__":
     # Part 4 - Generate Training and Test set:---------------------------------
     # The following code is based on https://bit.ly/3dAxv5S    
     train, valid, test = data_set.generate_sets( data_set.__len__( ), 
-        0.7, 0.15 ) 
+        0.6, 0.2 ) 
 
     # For more information:
     # - https://bit.ly/2NzOASO
@@ -73,13 +73,12 @@ if __name__ == "__main__":
         num_workers=0, sampler=test_sampler )
 
     # Train the network
-    num_epochs = 2
+    num_epochs = 100
     for epoch in range( num_epochs ):
         running_loss = 0.0
         for i , data in enumerate( train_loader, 0 ):
             # get the inputs; data is a list of [ inputs, labels ]
             inputs, labels = data
-            print( inputs.size(), labels.size() )
 
             # Zero the parameter gradients, otherwise we would 
             # accumulate the gradients for each loop iteration! 
@@ -87,17 +86,15 @@ if __name__ == "__main__":
 
             # Forward + Backward + optimize
             outputs = net( inputs )
-            loss = criterion( outputs, labels )
+            loss = criterion( outputs, labels.view( -1, 1 ) )
             loss.backward(  )
             optimizer.step(  )
 
             # print statistics
             running_loss += loss.item(  )
-
-            if i % 10 == 0:
-                print( "[ {:d}  {:5d} ] loss { .3f }".format( epoch + 1, i + 1, 
-                    running_loss / 10 ) )
-                running_loss = 0.0
-            
-            
+            # if i % 10 == 9:
+            #     print( "[%d, %5d] loss %.3f" % ( epoch + 1 , i + 1, 
+            #         running_loss / 10 ) )
+            #     running_loss = 0.0
+                  
     print( 'Finished Training' )
